@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- ป้องกันการเก็บ Cache ไฟล์ HTML บน LINE App -->
+  <!-- ➕ ป้องกันการเก็บ Cache บน LINE App Browser -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -100,7 +100,7 @@
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
     
     let currentUserId = "";
-    let cachedHistoryData = null; // ตัวแปรสำหรับจำประวัติล่วงหน้า
+    let isRendered = false;
 
     window.onload = function() {
       liff.init({ liffId: MY_LIFF_ID })
@@ -119,14 +119,13 @@
     };
 
     function loadFromCache(userId) {
-      const cachedCard = localStorage.getItem('member_card_' + userId);
-      if (cachedCard) {
-        try { renderCard(JSON.parse(cachedCard)); } catch (e) {}
-      }
-      
-      const cachedHist = localStorage.getItem('member_history_' + userId);
-      if (cachedHist) {
-        try { cachedHistoryData = JSON.parse(cachedHist); } catch (e) {}
+      try {
+        const cachedCard = localStorage.getItem('member_card_' + userId);
+        if (cachedCard) {
+          renderCard(JSON.parse(cachedCard));
+        }
+      } catch (e) {
+        console.error("Cache load error:", e);
       }
     }
 
@@ -137,18 +136,21 @@
           if (data.success) {
             localStorage.setItem('member_card_' + lineUserId, JSON.stringify(data));
             renderCard(data);
-          } else if (!localStorage.getItem('member_card_' + lineUserId)) {
+          } else if (!isRendered) {
             showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
           }
         })
         .catch(() => {
-          if (!localStorage.getItem('member_card_' + lineUserId)) {
+          if (!isRendered) {
             showError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
           }
         });
     }
 
     function renderCard(data) {
+      if (!data) return;
+      isRendered = true;
+
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('error').classList.add('hidden');
 
@@ -160,40 +162,21 @@
       if (data.phone) {
         const qrcodeContainer = document.getElementById("qrcode");
         qrcodeContainer.innerHTML = "";
-        new QRCode(qrcodeContainer, {
-          text: data.phone,
-          width: 140,
-          height: 140,
-          colorDark : "#065f46",
-          colorLight : "#ffffff",
-          correctLevel : QRCode.CorrectLevel.H
-        });
+        try {
+          new QRCode(qrcodeContainer, {
+            text: String(data.phone),
+            width: 140,
+            height: 140,
+            colorDark : "#065f46",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+          });
+        } catch (e) {
+          console.error("QR Code Error:", e);
+        }
       }
 
       document.getElementById('card').classList.remove('hidden');
-
-      // 🚀 แอบดึงข้อมูลประวัติเบื้องหลังทันทีที่เปิดบัตรขึ้นมา
-      preloadHistoryData(currentUserId);
-    }
-
-    // 🚀 ฟังก์ชันดึงประวัติมารอไว้ล่วงหน้า
-    function preloadHistoryData(lineUserId) {
-      if (!lineUserId) return;
-      fetch(`${APPS_SCRIPT_URL}?action=getHistory&lineUserId=${lineUserId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.history) {
-            cachedHistoryData = data.history;
-            localStorage.setItem('member_history_' + lineUserId, JSON.stringify(data.history));
-            
-            // ถ้าผู้ใช้งานเปิด Modal ทิ้งไว้อยู่ ให้เรนเดอร์ข้อมูลใหม่ทันที
-            const modal = document.getElementById('historyModal');
-            if (!modal.classList.contains('hidden')) {
-              renderHistoryUI(data.history);
-            }
-          }
-        })
-        .catch(e => console.log("Preload history error", e));
     }
 
     // ฟังก์ชัน เปิด-ปิด หน้าต่างประวัติ
@@ -201,20 +184,77 @@
       const modal = document.getElementById('historyModal');
       if (modal.classList.contains('hidden')) {
         modal.classList.remove('hidden');
-        
-        // ถ้ามีข้อมูล Cache อยู่แล้วให้เปิดโชว์ทันทีแบบไม่ต้องรอ
-        if (cachedHistoryData) {
-          renderHistoryUI(cachedHistoryData);
-        } else {
-          document.getElementById('historyList').innerHTML = `<p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>`;
-          preloadHistoryData(currentUserId);
-        }
+        loadHistoryData();
       } else {
         modal.classList.add('hidden');
+      }
+    }
+
+    // ฟังก์ชัน ดึงข้อมูลประวัติจาก Apps Script
+    function loadHistoryData() {
+      const historyList = document.getElementById('historyList');
+      
+      // ดึงจาก Cache มาแสดงก่อนถ้ามี
+      const cachedHist = localStorage.getItem('member_history_' + currentUserId);
+      if (cachedHist) {
+        try {
+          renderHistoryUI(JSON.parse(cachedHist));
+        } catch(e) {}
+      } else {
+        historyList.innerHTML = `<p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>`;
+      }
+
+      // ดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์เสมอ
+      if (currentUserId) {
+        fetch(`${APPS_SCRIPT_URL}?action=getHistory&lineUserId=${currentUserId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.history) {
+              localStorage.setItem('member_history_' + currentUserId, JSON.stringify(data.history));
+              renderHistoryUI(data.history);
+            } else if (!cachedHist) {
+              historyList.innerHTML = `<p class="text-center text-slate-400 py-6">ยังไม่มีประวัติการทำรายการ</p>`;
+            }
+          })
+          .catch(() => {
+            if (!cachedHist) {
+              historyList.innerHTML = `<p class="text-center text-red-500 py-6">ไม่สามารถโหลดประวัติได้</p>`;
+            }
+          });
       }
     }
 
     // ฟังก์ชัน วาดรายการประวัติลงใน HTML
     function renderHistoryUI(historyItems) {
       const historyList = document.getElementById('historyList');
-      if (historyItems && historyItems.length > 0)
+      if (historyItems && historyItems.length > 0) {
+        historyList.innerHTML = historyItems.map(item => {
+          const isAdd = item.type === 'ADD';
+          return `
+            <div class="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
+              <div class="space-y-0.5">
+                <p class="font-semibold text-slate-800">${item.description || (isAdd ? 'ได้รับแต้มสะสม' : 'แลกของรางวัล/ส่วนลด')}</p>
+                <p class="text-[11px] text-slate-400">${item.date}</p>
+              </div>
+              <div class="text-right">
+                <span class="font-bold text-sm ${isAdd ? 'text-emerald-600' : 'text-red-500'}">
+                  ${isAdd ? '+' : '-'}${Number(item.points).toLocaleString()}
+                </span>
+                <p class="text-[10px] text-slate-400">คะแนน</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        historyList.innerHTML = `<p class="text-center text-slate-400 py-6">ยังไม่มีประวัติการทำรายการ</p>`;
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error-msg').innerText = msg;
+      document.getElementById('error').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
