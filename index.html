@@ -7,6 +7,8 @@
   <!-- โหลด Tailwind CSS และ LINE LIFF SDK -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- ➕ โหลด QRCode.js Library สำหรับเจนภาพ QR Code -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
@@ -38,6 +40,12 @@
         <p class="text-xs text-emerald-100">คะแนน</p>
       </div>
     </div>
+
+    <!-- ➕ กล่องแสดง QR Code บนบัตรสำหรับให้พนักงานสแกน -->
+    <div class="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-inner text-gray-800">
+      <div id="qrcode" class="p-1 bg-white rounded-lg"></div>
+      <p class="text-[11px] text-gray-500 mt-2 font-medium">ยื่น QR Code นี้ให้พนักงานเพื่อสะสมคะแนน</p>
+    </div>
   </div>
 
   <!-- แสดงข้อความแจ้งเตือนกรณีมี Error -->
@@ -47,7 +55,7 @@
 
   <script>
     // ==========================================
-    // ⚙️ จุดที่ต้องเปลี่ยนค่าของคุณเอง 2 จุดนี้ครับ
+    // ⚙️ ตั้งค่า LIFF ID และ Apps Script URL
     // ==========================================
     const MY_LIFF_ID = "2011856114-wFeurW8T"; 
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
@@ -61,7 +69,7 @@
             liff.getProfile().then(profile => {
               const userId = profile.userId;
 
-              // 1. ดึงข้อมูลที่เคยเซฟไว้ในเครื่องมาโชว์ก่อนทันที (เร็ว 0.01 วินาที!)
+              // 1. ดึงข้อมูลที่เคยเซฟไว้ในเครื่องมาโชว์ก่อนทันที
               loadFromCache(userId);
 
               // 2. แอบยิงไปดึงข้อมูลล่าสุดจาก Google Sheets เบื้องหลัง
@@ -124,6 +132,21 @@
       document.getElementById('phone').innerText = data.phone || "";
       document.getElementById('points').innerText = Number(data.points || 0).toLocaleString();
       document.getElementById('tier').innerText = data.tier || "ระดับ 1";
+
+      // ➕ โค้ดสร้าง QR Code จากเบอร์โทรศัพท์ของสมาชิก
+      if (data.phone) {
+        const qrcodeContainer = document.getElementById("qrcode");
+        qrcodeContainer.innerHTML = ""; // ล้าง QR Code เก่าออกก่อน
+        
+        new QRCode(qrcodeContainer, {
+          text: data.phone, // แปลงเบอร์โทรศัพท์เป็น QR Code
+          width: 140,
+          height: 140,
+          colorDark : "#065f46", // สี QR Code เขียวเข้ม
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.H
+        });
+      }
 
       document.getElementById('card').classList.remove('hidden');
     }
