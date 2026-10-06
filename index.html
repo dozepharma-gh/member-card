@@ -10,12 +10,14 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
+  <!-- หน้าจอระหว่างรอโหลดข้อมูลครั้งแรก -->
   <div id="loading" class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm w-full">
     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-    <p class="text-gray-600 font-medium">กำลังดึงข้อมูลสมาชิก...</p>
+    <p class="text-gray-600 font-medium">กำลังเปิดบัตรสมาชิก...</p>
   </div>
 
-  <div id="card" class="hidden bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-6 rounded-3xl shadow-xl max-w-sm w-full">
+  <!-- ตัวบัตรสมาชิกดิจิทัล -->
+  <div id="card" class="hidden bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-6 rounded-3xl shadow-xl max-w-sm w-full transition-all duration-300">
     <div class="flex justify-between items-center mb-6">
       <span class="font-bold text-lg tracking-wide">บัตรสมาชิกดิจิทัล</span>
       <span id="tier" class="bg-white/20 text-xs px-3 py-1 rounded-full backdrop-blur-md">ระดับ 1</span>
@@ -38,15 +40,16 @@
     </div>
   </div>
 
+  <!-- แสดงข้อความแจ้งเตือนกรณีมี Error -->
   <div id="error" class="hidden bg-red-50 text-red-600 p-4 rounded-2xl max-w-sm w-full text-center text-sm shadow">
     <p id="error-msg">เกิดข้อผิดพลาดในการดึงข้อมูล</p>
   </div>
 
   <script>
-    // 1. ใส่ LIFF ID ของแอปบัตรสมาชิก
+    // ==========================================
+    // ⚙️ จุดที่ต้องเปลี่ยนค่าของคุณเอง 2 จุดนี้ครับ
+    // ==========================================
     const MY_LIFF_ID = "2011856114-wFeurW8T"; 
-    
-    // 2. ใส่ Web App URL ล่าสุดจาก Google Apps Script (Version 16)
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
 
     window.onload = function() {
@@ -56,7 +59,13 @@
             liff.login();
           } else {
             liff.getProfile().then(profile => {
-              fetchMemberData(profile.userId);
+              const userId = profile.userId;
+
+              // 1. ดึงข้อมูลที่เคยเซฟไว้ในเครื่องมาโชว์ก่อนทันที (เร็ว 0.01 วินาที!)
+              loadFromCache(userId);
+
+              // 2. แอบยิงไปดึงข้อมูลล่าสุดจาก Google Sheets เบื้องหลัง
+              fetchMemberData(userId);
             }).catch(err => {
               showError("ไม่สามารถดึงโปรไฟล์ LINE ได้: " + err);
             });
@@ -67,26 +76,59 @@
         });
     };
 
+    // ฟังก์ชันดึงข้อมูลจากเครื่อง (Cache)
+    function loadFromCache(userId) {
+      const cached = localStorage.getItem('member_card_' + userId);
+      if (cached) {
+        try {
+          const data = JSON.parse(cached);
+          renderCard(data); // แสดงบัตรทันที ไม่ต้องรอเซิร์ฟเวอร์
+        } catch (e) {
+          console.error("Cache read error", e);
+        }
+      }
+    }
+
+    // ฟังก์ชันยิง API ไปดึงข้อมูลล่าสุดจาก Google Apps Script
     function fetchMemberData(lineUserId) {
       fetch(`${APPS_SCRIPT_URL}?action=getMemberData&lineUserId=${lineUserId}`)
         .then(res => res.json())
         .then(data => {
-          document.getElementById('loading').classList.add('hidden');
           if (data.success) {
-            document.getElementById('name').innerText = data.fullName || "สมาชิก";
-            document.getElementById('phone').innerText = data.phone || "";
-            document.getElementById('points').innerText = data.points || 0;
-            document.getElementById('tier').innerText = data.tier || "ระดับ 1";
-            document.getElementById('card').classList.remove('hidden');
+            // บันทึกข้อมูลสมาชิกล่าสุดลงเครื่องไว้ใช้ครั้งต่อไป
+            localStorage.setItem('member_card_' + lineUserId, JSON.stringify(data));
+            
+            // อัปเดตข้อมูลบนบัตรเป็นข้อมูลล่าสุด
+            renderCard(data);
           } else {
-            showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
+            // ถ้าในเครื่องไม่มี Cache เลย แล้วหาไม่เจอ ค่อยโชว์ Error
+            if (!localStorage.getItem('member_card_' + lineUserId)) {
+              showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
+            }
           }
         })
         .catch(err => {
-          showError("ไม่สามารถเชื่อมต่อเครื่องเซิร์ฟเวอร์ได้");
+          // ถ้าในเครื่องไม่มี Cache เลย แล้วเชื่อมต่อเน็ตไม่ได้ ค่อยโชว์ Error
+          if (!localStorage.getItem('member_card_' + lineUserId)) {
+            showError("ไม่สามารถเชื่อมต่อเครื่องเซิร์ฟเวอร์ได้");
+          }
         });
     }
 
+    // ฟังก์ชันวาดข้อมูลลงบนบัตร
+    function renderCard(data) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+
+      document.getElementById('name').innerText = data.fullName || "สมาชิก";
+      document.getElementById('phone').innerText = data.phone || "";
+      document.getElementById('points').innerText = Number(data.points || 0).toLocaleString();
+      document.getElementById('tier').innerText = data.tier || "ระดับ 1";
+
+      document.getElementById('card').classList.remove('hidden');
+    }
+
+    // ฟังก์ชันโชว์ข้อผิดพลาด
     function showError(msg) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('error-msg').innerText = msg;
