@@ -53,7 +53,7 @@
       </div>
     </div>
 
-    <!-- ➕ ปุ่มสำหรับกดเปิดดูประวัติ -->
+    <!-- ➕ ปุ่มกดเปิดดูประวัติ -->
     <button onclick="toggleHistoryModal()" 
       class="w-full bg-white hover:bg-slate-50 text-emerald-700 font-bold py-3 px-4 rounded-2xl shadow-md border border-slate-200 transition flex items-center justify-center gap-2 text-sm">
       <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i>
@@ -62,9 +62,9 @@
 
   </div>
 
-  <!-- ➕ Modal แสดงประวัติการทำรายการ -->
+  <!-- ➕ Modal แสดงประวัติรายการ -->
   <div id="historyModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
       
       <!-- Modal Header -->
       <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -160,7 +160,7 @@
       document.getElementById('card').classList.remove('hidden');
     }
 
-    // ➕ ฟังก์ชันเปิด/ปิด หน้าต่างประวัติ
+    // ฟังก์ชัน เปิด-ปิด หน้าต่างประวัติ
     function toggleHistoryModal() {
       const modal = document.getElementById('historyModal');
       if (modal.classList.contains('hidden')) {
@@ -171,7 +171,7 @@
       }
     }
 
-    // ➕ ดึงประวัติจาก Google Apps Script
+    // ฟังก์ชัน ดึงข้อมูลประวัติจาก Apps Script
     function loadHistoryData() {
       const historyList = document.getElementById('historyList');
       historyList.innerHTML = `<p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>`;
