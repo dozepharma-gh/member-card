@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- ➕ เพิ่ม Meta Tag ป้องกันการเก็บ Cache -->
+  <!-- ป้องกันการเก็บ Cache ไฟล์ HTML บน LINE App -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    <!-- ➕ ปุ่มกดเปิดดูประวัติ -->
+    <!-- ปุ่มกดเปิดดูประวัติ -->
     <button onclick="toggleHistoryModal()" 
       class="w-full bg-white hover:bg-slate-50 text-emerald-700 font-bold py-3 px-4 rounded-2xl shadow-md border border-slate-200 transition flex items-center justify-center gap-2 text-sm">
       <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i>
@@ -68,7 +68,7 @@
 
   </div>
 
-  <!-- ➕ Modal แสดงประวัติรายการ -->
+  <!-- Modal แสดงประวัติรายการ -->
   <div id="historyModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
     <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
       
@@ -98,7 +98,9 @@
   <script>
     const MY_LIFF_ID = "2011856114-wFeurW8T"; 
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
+    
     let currentUserId = "";
+    let cachedHistoryData = null; // ตัวแปรสำหรับจำประวัติล่วงหน้า
 
     window.onload = function() {
       liff.init({ liffId: MY_LIFF_ID })
@@ -117,9 +119,14 @@
     };
 
     function loadFromCache(userId) {
-      const cached = localStorage.getItem('member_card_' + userId);
-      if (cached) {
-        try { renderCard(JSON.parse(cached)); } catch (e) {}
+      const cachedCard = localStorage.getItem('member_card_' + userId);
+      if (cachedCard) {
+        try { renderCard(JSON.parse(cachedCard)); } catch (e) {}
+      }
+      
+      const cachedHist = localStorage.getItem('member_history_' + userId);
+      if (cachedHist) {
+        try { cachedHistoryData = JSON.parse(cachedHist); } catch (e) {}
       }
     }
 
@@ -164,6 +171,29 @@
       }
 
       document.getElementById('card').classList.remove('hidden');
+
+      // 🚀 แอบดึงข้อมูลประวัติเบื้องหลังทันทีที่เปิดบัตรขึ้นมา
+      preloadHistoryData(currentUserId);
+    }
+
+    // 🚀 ฟังก์ชันดึงประวัติมารอไว้ล่วงหน้า
+    function preloadHistoryData(lineUserId) {
+      if (!lineUserId) return;
+      fetch(`${APPS_SCRIPT_URL}?action=getHistory&lineUserId=${lineUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.history) {
+            cachedHistoryData = data.history;
+            localStorage.setItem('member_history_' + lineUserId, JSON.stringify(data.history));
+            
+            // ถ้าผู้ใช้งานเปิด Modal ทิ้งไว้อยู่ ให้เรนเดอร์ข้อมูลใหม่ทันที
+            const modal = document.getElementById('historyModal');
+            if (!modal.classList.contains('hidden')) {
+              renderHistoryUI(data.history);
+            }
+          }
+        })
+        .catch(e => console.log("Preload history error", e));
     }
 
     // ฟังก์ชัน เปิด-ปิด หน้าต่างประวัติ
@@ -171,52 +201,20 @@
       const modal = document.getElementById('historyModal');
       if (modal.classList.contains('hidden')) {
         modal.classList.remove('hidden');
-        loadHistoryData();
+        
+        // ถ้ามีข้อมูล Cache อยู่แล้วให้เปิดโชว์ทันทีแบบไม่ต้องรอ
+        if (cachedHistoryData) {
+          renderHistoryUI(cachedHistoryData);
+        } else {
+          document.getElementById('historyList').innerHTML = `<p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>`;
+          preloadHistoryData(currentUserId);
+        }
       } else {
         modal.classList.add('hidden');
       }
     }
 
-    // ฟังก์ชัน ดึงข้อมูลประวัติจาก Apps Script
-    function loadHistoryData() {
+    // ฟังก์ชัน วาดรายการประวัติลงใน HTML
+    function renderHistoryUI(historyItems) {
       const historyList = document.getElementById('historyList');
-      historyList.innerHTML = `<p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>`;
-
-      fetch(`${APPS_SCRIPT_URL}?action=getHistory&lineUserId=${currentUserId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.history && data.history.length > 0) {
-            historyList.innerHTML = data.history.map(item => {
-              const isAdd = item.type === 'ADD';
-              return `
-                <div class="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div class="space-y-0.5">
-                    <p class="font-semibold text-slate-800">${item.description || (isAdd ? 'ได้รับแต้มสะสม' : 'แลกของรางวัล/ส่วนลด')}</p>
-                    <p class="text-[11px] text-slate-400">${item.date}</p>
-                  </div>
-                  <div class="text-right">
-                    <span class="font-bold text-sm ${isAdd ? 'text-emerald-600' : 'text-red-500'}">
-                      ${isAdd ? '+' : '-'}${Number(item.points).toLocaleString()}
-                    </span>
-                    <p class="text-[10px] text-slate-400">คะแนน</p>
-                  </div>
-                </div>
-              `;
-            }).join('');
-          } else {
-            historyList.innerHTML = `<p class="text-center text-slate-400 py-6">ยังไม่มีประวัติการทำรายการ</p>`;
-          }
-        })
-        .catch(() => {
-          historyList.innerHTML = `<p class="text-center text-red-500 py-6">ไม่สามารถโหลดประวัติได้</p>`;
-        });
-    }
-
-    function showError(msg) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('error-msg').innerText = msg;
-      document.getElementById('error').classList.remove('hidden');
-    }
-  </script>
-</body>
-</html>
+      if (historyItems && historyItems.length > 0)
