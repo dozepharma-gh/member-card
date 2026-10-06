@@ -4,47 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>บัตรสมาชิก - ร้านยา</title>
-  <!-- โหลด Tailwind CSS และ LINE LIFF SDK -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- ➕ โหลด QRCode.js Library สำหรับเจนภาพ QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Prompt', sans-serif; }
+  </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
-  <!-- หน้าจอระหว่างรอโหลดข้อมูลครั้งแรก -->
+  <!-- หน้าจอระหว่างรอโหลดข้อมูล -->
   <div id="loading" class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm w-full">
     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-    <p class="text-gray-600 font-medium">กำลังเปิดบัตรสมาชิก...</p>
+    <p class="text-gray-600 font-medium text-sm">กำลังเปิดบัตรสมาชิก...</p>
   </div>
 
   <!-- ตัวบัตรสมาชิกดิจิทัล -->
-  <div id="card" class="hidden bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-6 rounded-3xl shadow-xl max-w-sm w-full transition-all duration-300">
-    <div class="flex justify-between items-center mb-6">
-      <span class="font-bold text-lg tracking-wide">บัตรสมาชิกดิจิทัล</span>
-      <span id="tier" class="bg-white/20 text-xs px-3 py-1 rounded-full backdrop-blur-md">ระดับ 1</span>
-    </div>
+  <div id="card" class="hidden max-w-sm w-full space-y-4">
     
-    <div class="mb-6">
-      <p class="text-xs text-emerald-100 mb-1">ชื่อสมาชิก</p>
-      <h2 id="name" class="text-xl font-bold">กำลังโหลด...</h2>
-      <p id="phone" class="text-xs text-emerald-200 mt-0.5">-</p>
+    <div class="bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-6 rounded-3xl shadow-xl transition-all duration-300">
+      <div class="flex justify-between items-center mb-6">
+        <span class="font-bold text-lg tracking-wide">บัตรสมาชิกดิจิทัล</span>
+        <span id="tier" class="bg-white/20 text-xs px-3 py-1 rounded-full backdrop-blur-md font-semibold">ระดับ 1</span>
+      </div>
+      
+      <div class="mb-6">
+        <p class="text-xs text-emerald-100 mb-1">ชื่อสมาชิก</p>
+        <h2 id="name" class="text-xl font-bold">กำลังโหลด...</h2>
+        <p id="phone" class="text-xs text-emerald-200 mt-0.5">-</p>
+      </div>
+
+      <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-4 flex justify-between items-center">
+        <div>
+          <p class="text-xs text-emerald-100">คะแนนสะสมคงเหลือ</p>
+          <p id="points" class="text-3xl font-extrabold mt-1">0</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-emerald-100">คะแนน</p>
+        </div>
+      </div>
+
+      <!-- QR Code บนบัตร -->
+      <div class="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-inner text-gray-800">
+        <div id="qrcode" class="p-1 bg-white rounded-lg"></div>
+        <p class="text-[11px] text-gray-500 mt-2 font-medium">ยื่น QR Code นี้ให้พนักงานเพื่อสะสมคะแนน</p>
+      </div>
     </div>
 
-    <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-4 flex justify-between items-center">
-      <div>
-        <p class="text-xs text-emerald-100">คะแนนสะสมคงเหลือ</p>
-        <p id="points" class="text-3xl font-extrabold mt-1">0</p>
-      </div>
-      <div class="text-right">
-        <p class="text-xs text-emerald-100">คะแนน</p>
-      </div>
-    </div>
+    <!-- ➕ ปุ่มสำหรับกดเปิดดูประวัติ -->
+    <button onclick="toggleHistoryModal()" 
+      class="w-full bg-white hover:bg-slate-50 text-emerald-700 font-bold py-3 px-4 rounded-2xl shadow-md border border-slate-200 transition flex items-center justify-center gap-2 text-sm">
+      <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i>
+      <span>ประวัติการได้รับและการใช้แต้ม</span>
+    </button>
 
-    <!-- ➕ กล่องแสดง QR Code บนบัตรสำหรับให้พนักงานสแกน -->
-    <div class="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-inner text-gray-800">
-      <div id="qrcode" class="p-1 bg-white rounded-lg"></div>
-      <p class="text-[11px] text-gray-500 mt-2 font-medium">ยื่น QR Code นี้ให้พนักงานเพื่อสะสมคะแนน</p>
+  </div>
+
+  <!-- ➕ Modal แสดงประวัติการทำรายการ -->
+  <div id="historyModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-emerald-600"></i> ประวัติกิจกรรมแต้ม
+        </h3>
+        <button onclick="toggleHistoryModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- รายการประวัติ -->
+      <div id="historyList" class="p-4 overflow-y-auto space-y-3 flex-1 text-sm">
+        <p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>
+      </div>
+
     </div>
   </div>
 
@@ -54,11 +90,9 @@
   </div>
 
   <script>
-    // ==========================================
-    // ⚙️ ตั้งค่า LIFF ID และ Apps Script URL
-    // ==========================================
     const MY_LIFF_ID = "2011856114-wFeurW8T"; 
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
+    let currentUserId = "";
 
     window.onload = function() {
       liff.init({ liffId: MY_LIFF_ID })
@@ -67,63 +101,40 @@
             liff.login();
           } else {
             liff.getProfile().then(profile => {
-              const userId = profile.userId;
-
-              // 1. ดึงข้อมูลที่เคยเซฟไว้ในเครื่องมาโชว์ก่อนทันที
-              loadFromCache(userId);
-
-              // 2. แอบยิงไปดึงข้อมูลล่าสุดจาก Google Sheets เบื้องหลัง
-              fetchMemberData(userId);
-            }).catch(err => {
-              showError("ไม่สามารถดึงโปรไฟล์ LINE ได้: " + err);
-            });
+              currentUserId = profile.userId;
+              loadFromCache(currentUserId);
+              fetchMemberData(currentUserId);
+            }).catch(err => showError("ไม่สามารถดึงโปรไฟล์ LINE ได้: " + err));
           }
         })
-        .catch(err => {
-          showError("เกิดข้อผิดพลาดในการเริ่มต้น LIFF: " + err);
-        });
+        .catch(err => showError("เกิดข้อผิดพลาดในการเริ่มต้น LIFF: " + err));
     };
 
-    // ฟังก์ชันดึงข้อมูลจากเครื่อง (Cache)
     function loadFromCache(userId) {
       const cached = localStorage.getItem('member_card_' + userId);
       if (cached) {
-        try {
-          const data = JSON.parse(cached);
-          renderCard(data); // แสดงบัตรทันที ไม่ต้องรอเซิร์ฟเวอร์
-        } catch (e) {
-          console.error("Cache read error", e);
-        }
+        try { renderCard(JSON.parse(cached)); } catch (e) {}
       }
     }
 
-    // ฟังก์ชันยิง API ไปดึงข้อมูลล่าสุดจาก Google Apps Script
     function fetchMemberData(lineUserId) {
       fetch(`${APPS_SCRIPT_URL}?action=getMemberData&lineUserId=${lineUserId}`)
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            // บันทึกข้อมูลสมาชิกล่าสุดลงเครื่องไว้ใช้ครั้งต่อไป
             localStorage.setItem('member_card_' + lineUserId, JSON.stringify(data));
-            
-            // อัปเดตข้อมูลบนบัตรเป็นข้อมูลล่าสุด
             renderCard(data);
-          } else {
-            // ถ้าในเครื่องไม่มี Cache เลย แล้วหาไม่เจอ ค่อยโชว์ Error
-            if (!localStorage.getItem('member_card_' + lineUserId)) {
-              showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
-            }
+          } else if (!localStorage.getItem('member_card_' + lineUserId)) {
+            showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
           }
         })
-        .catch(err => {
-          // ถ้าในเครื่องไม่มี Cache เลย แล้วเชื่อมต่อเน็ตไม่ได้ ค่อยโชว์ Error
+        .catch(() => {
           if (!localStorage.getItem('member_card_' + lineUserId)) {
-            showError("ไม่สามารถเชื่อมต่อเครื่องเซิร์ฟเวอร์ได้");
+            showError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
           }
         });
     }
 
-    // ฟังก์ชันวาดข้อมูลลงบนบัตร
     function renderCard(data) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('error').classList.add('hidden');
@@ -133,16 +144,14 @@
       document.getElementById('points').innerText = Number(data.points || 0).toLocaleString();
       document.getElementById('tier').innerText = data.tier || "ระดับ 1";
 
-      // ➕ โค้ดสร้าง QR Code จากเบอร์โทรศัพท์ของสมาชิก
       if (data.phone) {
         const qrcodeContainer = document.getElementById("qrcode");
-        qrcodeContainer.innerHTML = ""; // ล้าง QR Code เก่าออกก่อน
-        
+        qrcodeContainer.innerHTML = "";
         new QRCode(qrcodeContainer, {
-          text: data.phone, // แปลงเบอร์โทรศัพท์เป็น QR Code
+          text: data.phone,
           width: 140,
           height: 140,
-          colorDark : "#065f46", // สี QR Code เขียวเข้ม
+          colorDark : "#065f46",
           colorLight : "#ffffff",
           correctLevel : QRCode.CorrectLevel.H
         });
@@ -151,7 +160,52 @@
       document.getElementById('card').classList.remove('hidden');
     }
 
-    // ฟังก์ชันโชว์ข้อผิดพลาด
+    // ➕ ฟังก์ชันเปิด/ปิด หน้าต่างประวัติ
+    function toggleHistoryModal() {
+      const modal = document.getElementById('historyModal');
+      if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+        loadHistoryData();
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    // ➕ ดึงประวัติจาก Google Apps Script
+    function loadHistoryData() {
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = `<p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>`;
+
+      fetch(`${APPS_SCRIPT_URL}?action=getHistory&lineUserId=${currentUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.history && data.history.length > 0) {
+            historyList.innerHTML = data.history.map(item => {
+              const isAdd = item.type === 'ADD';
+              return `
+                <div class="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div class="space-y-0.5">
+                    <p class="font-semibold text-slate-800">${item.description || (isAdd ? 'ได้รับแต้มสะสม' : 'แลกของรางวัล/ส่วนลด')}</p>
+                    <p class="text-[11px] text-slate-400">${item.date}</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="font-bold text-sm ${isAdd ? 'text-emerald-600' : 'text-red-500'}">
+                      ${isAdd ? '+' : '-'}${Number(item.points).toLocaleString()}
+                    </span>
+                    <p class="text-[10px] text-slate-400">คะแนน</p>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          } else {
+            historyList.innerHTML = `<p class="text-center text-slate-400 py-6">ยังไม่มีประวัติการทำรายการ</p>`;
+          }
+        })
+        .catch(() => {
+          historyList.innerHTML = `<p class="text-center text-red-500 py-6">ไม่สามารถโหลดประวัติได้</p>`;
+        });
+    }
+
     function showError(msg) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('error-msg').innerText = msg;
