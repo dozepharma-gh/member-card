@@ -46,7 +46,7 @@
     .card { border-radius: 22px; background: var(--silver); box-shadow: 0 16px 36px rgba(17,18,20,.22), inset 0 0 0 1px rgba(255,255,255,.6); padding: 22px; display: flex; flex-direction: column; gap: 22px; color: var(--ink); }
     .card-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .card-top img { width: 120px; height: auto; }
-    .tier { background: var(--ink); color: #fff; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+    .tier { color: var(--ink-2); font-size: 11px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; white-space: nowrap; }
     .label { font-size: 12px; color: var(--ink-2); }
     .name { font-size: 20px; font-weight: 600; line-height: 1.3; margin-top: 2px; word-break: break-word; }
     .phone { font-size: 13px; color: var(--ink-2); letter-spacing: .04em; margin-top: 2px; }
@@ -54,10 +54,38 @@
     .card-bottom .small-caps { font-size: 11px; font-weight: 500; letter-spacing: .3em; color: var(--ink-2); }
     .points { font-size: 36px; font-weight: 600; line-height: 1.05; text-align: right; }
 
-    /* VIP (ระดับ 2 ขึ้นไป): บัตรสีดำ ตัวอักษรสีเงิน */
-    .card.vip { background: linear-gradient(135deg, #2a2b2f 0%, #111214 45%, #26272b 75%, #111214 100%); color: #f2f3f5; box-shadow: 0 16px 36px rgba(17,18,20,.4), inset 0 0 0 1.5px #b4b8be; }
-    .card.vip .label, .card.vip .phone, .card.vip .small-caps { color: #b4b8be; }
-    .card.vip .tier { background: var(--silver); color: var(--ink); }
+    .card { position: relative; overflow: hidden; }
+    .card > *:not(.sheen) { position: relative; }
+    .sheen { display: none; }
+
+    /* ===== Exclusive Black Card (ระดับ 2 ขึ้นไป) — quiet luxury: ดำด้าน เรียบ ขอบเงินบาง ===== */
+    .card.vip {
+      --foil: linear-gradient(100deg, #e9eaec 0%, #9a9ea5 30%, #f7f7f8 50%, #8e9298 72%, #d5d8dc 100%);
+      border: 1px solid transparent;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.022) 0 1px, transparent 1px 4px) padding-box,
+        radial-gradient(130% 100% at 100% 0%, rgba(255,255,255,.07), transparent 55%) padding-box,
+        linear-gradient(160deg, #19191c 0%, #0c0c0d 55%, #121214 100%) padding-box,
+        linear-gradient(135deg, #8a8e95 0%, #3a3d42 35%, #b4b8be 55%, #3a3d42 80%, #6e7278 100%) border-box;
+      color: #ececee;
+      box-shadow: 0 28px 56px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.35);
+    }
+    .card.vip .label, .card.vip .phone { color: #7d8187; }
+    .card.vip .name { color: #ececee; font-weight: 500; letter-spacing: .02em; }
+    .card.vip .card-top img { width: 100px; opacity: .92; }
+    .card.vip .tier, .card.vip .small-caps, .card.vip .points {
+      background: var(--foil); -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .card.vip .tier { font-size: 10px; font-weight: 500; letter-spacing: .3em; text-align: right; white-space: pre-line; line-height: 1.8; }
+    .card.vip .small-caps { font-size: 10px; letter-spacing: .36em; }
+    .card.vip .points { font-weight: 400; letter-spacing: .01em; }
+    .card.vip .sheen {
+      display: block; position: absolute; top: -60%; bottom: -60%; left: -80%; width: 50%;
+      background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
+      transform: skewX(-12deg); animation: sweep 9s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes sweep { 0%, 60% { left: -80%; } 100% { left: 140%; } }
+    @media (prefers-reduced-motion: reduce) { .card.vip .sheen { animation: none; display: none; } }
 
     /* QR */
     .qr { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 18px 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -102,9 +130,10 @@
     <!-- บัตรสมาชิก -->
     <div id="cardWrap" hidden style="display:flex; flex-direction:column; gap:16px;">
       <div id="card" class="card">
+        <div class="sheen" aria-hidden="true"></div>
         <div class="card-top">
           <img id="cardLogo" src="./logo-black.png" alt="doze pharma">
-          <span id="tier" class="tier">ระดับ 1</span>
+          <span id="tier" class="tier">Platinum Card</span>
         </div>
         <div>
           <div class="label">ชื่อสมาชิก</div>
@@ -204,15 +233,16 @@
     $('loading').hidden = true;
     $('error').hidden = true;
 
-    const tier = data.tier || "ระดับ 1";
+    // ในชีตยังเก็บเป็น "ระดับ 1" / "ระดับ 2" เหมือนเดิม — แปลงเป็นชื่อบัตรตอนแสดงผลเท่านั้น
+    // ระดับ 1 → Platinum Card | ระดับ 2 ขึ้นไป หรือ VIP → Exclusive Black Card
+    const tier = String(data.tier || "ระดับ 1");
+    const tierNum = parseInt(tier.replace(/\D/g, ""), 10);
+    const isVip = /vip|black/i.test(tier) || (!isNaN(tierNum) && tierNum >= 2);
+
     $('name').innerText = data.fullName || "สมาชิก";
     $('phone').innerText = data.phone || "";
     $('points').innerText = Number(data.points || 0).toLocaleString();
-    $('tier').innerText = tier;
-
-    // ระดับ 2 ขึ้นไป หรือ VIP → บัตรสีดำ
-    const tierNum = parseInt(String(tier).replace(/\D/g, ""), 10);
-    const isVip = /vip/i.test(tier) || (!isNaN(tierNum) && tierNum >= 2);
+    $('tier').textContent = isVip ? "Exclusive\nBlack Card" : "Platinum Card";
     $('card').classList.toggle('vip', isVip);
     $('cardLogo').src = isVip ? './logo-white.png' : './logo-black.png';
 
