@@ -3,258 +3,308 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- ➕ ป้องกันการเก็บ Cache บน LINE App Browser -->
+
+  <!-- ป้องกันการเก็บ Cache บน LINE App Browser -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <title>บัตรสมาชิก - ร้านยา</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>บัตรสมาชิก doze.</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Prompt', sans-serif; }
+    :root {
+      --ink: #111214;
+      --ink-2: #3a3d42;
+      --muted: #5c6066;
+      --line: #d5d8dc;
+      --bg: #f4f5f7;
+      --danger: #b42318;
+      --silver: linear-gradient(135deg, #fbfbfc 0%, #d5d8dc 18%, #f2f3f5 36%, #b4b8be 58%, #e6e8eb 78%, #c2c6cb 100%);
+      --silver-bar: linear-gradient(90deg, #c2c6cb 0%, #f2f3f5 30%, #b4b8be 60%, #fbfbfc 85%, #c2c6cb 100%);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); font-family: 'Kanit', sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    [hidden] { display: none !important; }
+
+    .brand { background: var(--ink); height: 112px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+    .brand img { width: 130px; height: auto; }
+    .brand small { font-size: 11px; letter-spacing: .3em; color: #b4b8be; }
+    .bar { height: 4px; background: var(--silver-bar); }
+    .content { flex: 1; padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* Loading / error */
+    .state { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 28px 20px; text-align: center; font-size: 15px; color: var(--ink-2); }
+    .spinner { width: 36px; height: 36px; margin: 0 auto 12px; border: 3px solid var(--line); border-top-color: var(--ink); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .state.error { background: #fef3f2; border-color: #fecdca; color: var(--danger); }
+
+    /* Card */
+    .card { border-radius: 22px; background: var(--silver); box-shadow: 0 16px 36px rgba(17,18,20,.22), inset 0 0 0 1px rgba(255,255,255,.6); padding: 22px; display: flex; flex-direction: column; gap: 22px; color: var(--ink); }
+    .card-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .card-top img { width: 120px; height: auto; }
+    .tier { background: var(--ink); color: #fff; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+    .label { font-size: 12px; color: var(--ink-2); }
+    .name { font-size: 20px; font-weight: 600; line-height: 1.3; margin-top: 2px; word-break: break-word; }
+    .phone { font-size: 13px; color: var(--ink-2); letter-spacing: .04em; margin-top: 2px; }
+    .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+    .card-bottom .small-caps { font-size: 11px; font-weight: 500; letter-spacing: .3em; color: var(--ink-2); }
+    .points { font-size: 36px; font-weight: 600; line-height: 1.05; text-align: right; }
+
+    /* VIP (ระดับ 2 ขึ้นไป): บัตรสีดำ ตัวอักษรสีเงิน */
+    .card.vip { background: linear-gradient(135deg, #2a2b2f 0%, #111214 45%, #26272b 75%, #111214 100%); color: #f2f3f5; box-shadow: 0 16px 36px rgba(17,18,20,.4), inset 0 0 0 1.5px #b4b8be; }
+    .card.vip .label, .card.vip .phone, .card.vip .small-caps { color: #b4b8be; }
+    .card.vip .tier { background: var(--silver); color: var(--ink); }
+
+    /* QR */
+    .qr { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 18px 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    #qrcode img, #qrcode canvas { display: block; }
+    .qr p { margin: 0; font-size: 13px; color: var(--ink-2); text-align: center; }
+
+    .btn { height: 52px; width: 100%; border-radius: 16px; font-family: inherit; font-size: 16px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
+    .btn:focus-visible, .icon-btn:focus-visible { outline: 3px solid #8a8e95; outline-offset: 2px; }
+
+    /* History sheet */
+    .overlay { position: fixed; inset: 0; background: rgba(17,18,20,.55); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
+    .sheet { background: #fff; width: 100%; max-width: 480px; max-height: 80vh; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; overflow: hidden; }
+    .sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid #e6e8eb; }
+    .sheet-head h3 { margin: 0; font-size: 17px; font-weight: 600; }
+    .icon-btn { width: 40px; height: 40px; border: none; background: transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .list { padding: 14px 16px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+    .item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--bg); }
+    .item .desc { font-weight: 500; }
+    .item .date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .item .amt { font-weight: 600; font-size: 15px; text-align: right; white-space: nowrap; }
+    .item .amt.add { color: var(--ink); }
+    .item .amt.use { color: var(--danger); }
+    .item .unit { font-size: 11px; color: var(--muted); text-align: right; }
+    .empty { text-align: center; color: var(--muted); padding: 24px 0; }
   </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+<body>
+<div class="wrap">
+  <header class="brand"><img src="./logo-white.png" alt="doze pharma"><small>MEMBER</small></header>
+  <div class="bar"></div>
 
-  <!-- หน้าจอระหว่างรอโหลดข้อมูล -->
-  <div id="loading" class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm w-full">
-    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-    <p class="text-gray-600 font-medium text-sm">กำลังเปิดบัตรสมาชิก...</p>
-  </div>
+  <main class="content">
+    <!-- ระหว่างรอโหลดข้อมูล -->
+    <div id="loading" class="state">
+      <div class="spinner" aria-hidden="true"></div>
+      กำลังเปิดบัตรสมาชิก...
+    </div>
 
-  <!-- ตัวบัตรสมาชิกดิจิทัล -->
-  <div id="card" class="hidden max-w-sm w-full space-y-4">
-    
-    <div class="bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-6 rounded-3xl shadow-xl transition-all duration-300">
-      <div class="flex justify-between items-center mb-6">
-        <span class="font-bold text-lg tracking-wide">บัตรสมาชิกดิจิทัล</span>
-        <span id="tier" class="bg-white/20 text-xs px-3 py-1 rounded-full backdrop-blur-md font-semibold">ระดับ 1</span>
-      </div>
-      
-      <div class="mb-6">
-        <p class="text-xs text-emerald-100 mb-1">ชื่อสมาชิก</p>
-        <h2 id="name" class="text-xl font-bold">กำลังโหลด...</h2>
-        <p id="phone" class="text-xs text-emerald-200 mt-0.5">-</p>
-      </div>
+    <!-- Error -->
+    <div id="error" class="state error" role="alert" hidden><p id="error-msg" style="margin:0">เกิดข้อผิดพลาดในการดึงข้อมูล</p></div>
 
-      <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md mb-4 flex justify-between items-center">
+    <!-- บัตรสมาชิก -->
+    <div id="cardWrap" hidden style="display:flex; flex-direction:column; gap:16px;">
+      <div id="card" class="card">
+        <div class="card-top">
+          <img id="cardLogo" src="./logo-black.png" alt="doze pharma">
+          <span id="tier" class="tier">ระดับ 1</span>
+        </div>
         <div>
-          <p class="text-xs text-emerald-100">คะแนนสะสมคงเหลือ</p>
-          <p id="points" class="text-3xl font-extrabold mt-1">0</p>
+          <div class="label">ชื่อสมาชิก</div>
+          <div id="name" class="name">กำลังโหลด...</div>
+          <div id="phone" class="phone">-</div>
         </div>
-        <div class="text-right">
-          <p class="text-xs text-emerald-100">คะแนน</p>
+        <div class="card-bottom">
+          <div class="small-caps">MEMBER</div>
+          <div>
+            <div class="label" style="text-align:right">คะแนนสะสมคงเหลือ</div>
+            <div id="points" class="points">0</div>
+          </div>
         </div>
       </div>
 
-      <!-- QR Code บนบัตร -->
-      <div class="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-inner text-gray-800">
-        <div id="qrcode" class="p-1 bg-white rounded-lg"></div>
-        <p class="text-[11px] text-gray-500 mt-2 font-medium">ยื่น QR Code นี้ให้พนักงานเพื่อสะสมคะแนน</p>
+      <div class="qr">
+        <div id="qrcode"></div>
+        <p>ยื่น QR Code นี้ให้พนักงานเพื่อสะสมคะแนน</p>
       </div>
+
+      <button type="button" class="btn" onclick="toggleHistoryModal()">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111214" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+        ประวัติการได้รับและการใช้แต้ม
+      </button>
     </div>
+  </main>
+</div>
 
-    <!-- ปุ่มกดเปิดดูประวัติ -->
-    <button onclick="toggleHistoryModal()" 
-      class="w-full bg-white hover:bg-slate-50 text-emerald-700 font-bold py-3 px-4 rounded-2xl shadow-md border border-slate-200 transition flex items-center justify-center gap-2 text-sm">
-      <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i>
-      <span>ประวัติการได้รับและการใช้แต้ม</span>
-    </button>
-
-  </div>
-
-  <!-- Modal แสดงประวัติรายการ -->
-  <div id="historyModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
-      
-      <!-- Modal Header -->
-      <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-          <i class="fa-solid fa-receipt text-emerald-600"></i> ประวัติกิจกรรมแต้ม
-        </h3>
-        <button onclick="toggleHistoryModal()" class="text-slate-400 hover:text-slate-600 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <!-- รายการประวัติ -->
-      <div id="historyList" class="p-4 overflow-y-auto space-y-3 flex-1 text-sm">
-        <p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>
-      </div>
-
+<!-- ประวัติรายการ -->
+<div id="historyModal" class="overlay" hidden onclick="if(event.target===this) toggleHistoryModal()">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <div class="sheet-head">
+      <h3 id="histTitle">ประวัติกิจกรรมแต้ม</h3>
+      <button type="button" class="icon-btn" aria-label="ปิด" onclick="toggleHistoryModal()">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a3d42" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
+    <div id="historyList" class="list"><p class="empty">กำลังโหลดประวัติ...</p></div>
   </div>
+</div>
 
-  <!-- แสดงข้อความแจ้งเตือนกรณีมี Error -->
-  <div id="error" class="hidden bg-red-50 text-red-600 p-4 rounded-2xl max-w-sm w-full text-center text-sm shadow">
-    <p id="error-msg">เกิดข้อผิดพลาดในการดึงข้อมูล</p>
-  </div>
+<script>
+  const MY_LIFF_ID = "2011856114-wFeurW8T";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
 
-  <script>
-    const MY_LIFF_ID = "2011856114-wFeurW8T"; 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
-    
-    let currentUserId = "";
-    let isRendered = false;
+  let currentUserId = "";
+  let isRendered = false;
 
-    window.onload = function() {
-      liff.init({ liffId: MY_LIFF_ID })
-        .then(() => {
-          if (!liff.isLoggedIn()) {
-            liff.login();
-          } else {
-            liff.getProfile().then(profile => {
-              currentUserId = profile.userId;
-              loadFromCache(currentUserId);
-              fetchMemberData(currentUserId);
-            }).catch(err => showError("ไม่สามารถดึงโปรไฟล์ LINE ได้: " + err));
-          }
-        })
-        .catch(err => showError("เกิดข้อผิดพลาดในการเริ่มต้น LIFF: " + err));
-    };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-    function loadFromCache(userId) {
-      try {
-        const cachedCard = localStorage.getItem('member_card_' + userId);
-        if (cachedCard) {
-          renderCard(JSON.parse(cachedCard));
+  window.onload = function () {
+    liff.init({ liffId: MY_LIFF_ID })
+      .then(() => {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
+          liff.getProfile().then(profile => {
+            currentUserId = profile.userId;
+            loadFromCache(currentUserId);
+            fetchMemberData(currentUserId);
+          }).catch(err => showError("ไม่สามารถดึงโปรไฟล์ LINE ได้: " + err));
         }
+      })
+      .catch(err => showError("เกิดข้อผิดพลาดในการเริ่มต้น LIFF: " + err));
+  };
+
+  function loadFromCache(userId) {
+    try {
+      const cachedCard = localStorage.getItem('member_card_' + userId);
+      if (cachedCard) renderCard(JSON.parse(cachedCard));
+    } catch (e) {
+      console.error("Cache load error:", e);
+    }
+  }
+
+  function fetchMemberData(lineUserId) {
+    fetch(`${APPS_SCRIPT_URL}?action=getMemberData&lineUserId=${encodeURIComponent(lineUserId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          try { localStorage.setItem('member_card_' + lineUserId, JSON.stringify(data)); } catch (e) {}
+          renderCard(data);
+        } else if (!isRendered) {
+          showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
+        }
+      })
+      .catch(() => {
+        if (!isRendered) showError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      });
+  }
+
+  function renderCard(data) {
+    if (!data) return;
+    isRendered = true;
+
+    $('loading').hidden = true;
+    $('error').hidden = true;
+
+    const tier = data.tier || "ระดับ 1";
+    $('name').innerText = data.fullName || "สมาชิก";
+    $('phone').innerText = data.phone || "";
+    $('points').innerText = Number(data.points || 0).toLocaleString();
+    $('tier').innerText = tier;
+
+    // ระดับ 2 ขึ้นไป หรือ VIP → บัตรสีดำ
+    const tierNum = parseInt(String(tier).replace(/\D/g, ""), 10);
+    const isVip = /vip/i.test(tier) || (!isNaN(tierNum) && tierNum >= 2);
+    $('card').classList.toggle('vip', isVip);
+    $('cardLogo').src = isVip ? './logo-white.png' : './logo-black.png';
+
+    if (data.phone) {
+      const qrcodeContainer = $("qrcode");
+      qrcodeContainer.innerHTML = "";
+      try {
+        new QRCode(qrcodeContainer, {
+          text: String(data.phone),
+          width: 160,
+          height: 160,
+          colorDark: "#111214",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
       } catch (e) {
-        console.error("Cache load error:", e);
+        console.error("QR Code Error:", e);
       }
     }
 
-    function fetchMemberData(lineUserId) {
-      fetch(`${APPS_SCRIPT_URL}?action=getMemberData&lineUserId=${lineUserId}`)
+    $('cardWrap').hidden = false;
+  }
+
+  // เปิด-ปิด หน้าต่างประวัติ
+  function toggleHistoryModal() {
+    const modal = $('historyModal');
+    if (modal.hidden) {
+      modal.hidden = false;
+      loadHistoryData();
+    } else {
+      modal.hidden = true;
+    }
+  }
+
+  // ดึงประวัติจาก Apps Script
+  function loadHistoryData() {
+    const historyList = $('historyList');
+
+    let cachedHist = null;
+    try { cachedHist = localStorage.getItem('member_history_' + currentUserId); } catch (e) {}
+    if (cachedHist) {
+      try { renderHistoryUI(JSON.parse(cachedHist)); } catch (e) {}
+    } else {
+      historyList.innerHTML = `<p class="empty">กำลังโหลดประวัติ...</p>`;
+    }
+
+    if (currentUserId) {
+      fetch(`${APPS_SCRIPT_URL}?action=getHistory&lineUserId=${encodeURIComponent(currentUserId)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.success) {
-            localStorage.setItem('member_card_' + lineUserId, JSON.stringify(data));
-            renderCard(data);
-          } else if (!isRendered) {
-            showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
+          if (data.success && data.history) {
+            try { localStorage.setItem('member_history_' + currentUserId, JSON.stringify(data.history)); } catch (e) {}
+            renderHistoryUI(data.history);
+          } else if (!cachedHist) {
+            historyList.innerHTML = `<p class="empty">ยังไม่มีประวัติการทำรายการ</p>`;
           }
         })
         .catch(() => {
-          if (!isRendered) {
-            showError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
-          }
+          if (!cachedHist) historyList.innerHTML = `<p class="empty" style="color:#b42318">ไม่สามารถโหลดประวัติได้</p>`;
         });
     }
+  }
 
-    function renderCard(data) {
-      if (!data) return;
-      isRendered = true;
-
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('error').classList.add('hidden');
-
-      document.getElementById('name').innerText = data.fullName || "สมาชิก";
-      document.getElementById('phone').innerText = data.phone || "";
-      document.getElementById('points').innerText = Number(data.points || 0).toLocaleString();
-      document.getElementById('tier').innerText = data.tier || "ระดับ 1";
-
-      if (data.phone) {
-        const qrcodeContainer = document.getElementById("qrcode");
-        qrcodeContainer.innerHTML = "";
-        try {
-          new QRCode(qrcodeContainer, {
-            text: String(data.phone),
-            width: 140,
-            height: 140,
-            colorDark : "#065f46",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-          });
-        } catch (e) {
-          console.error("QR Code Error:", e);
-        }
-      }
-
-      document.getElementById('card').classList.remove('hidden');
-    }
-
-    // ฟังก์ชัน เปิด-ปิด หน้าต่างประวัติ
-    function toggleHistoryModal() {
-      const modal = document.getElementById('historyModal');
-      if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        loadHistoryData();
-      } else {
-        modal.classList.add('hidden');
-      }
-    }
-
-    // ฟังก์ชัน ดึงข้อมูลประวัติจาก Apps Script
-    function loadHistoryData() {
-      const historyList = document.getElementById('historyList');
-      
-      // ดึงจาก Cache มาแสดงก่อนถ้ามี
-      const cachedHist = localStorage.getItem('member_history_' + currentUserId);
-      if (cachedHist) {
-        try {
-          renderHistoryUI(JSON.parse(cachedHist));
-        } catch(e) {}
-      } else {
-        historyList.innerHTML = `<p class="text-center text-slate-400 py-6">กำลังโหลดประวัติ...</p>`;
-      }
-
-      // ดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์เสมอ
-      if (currentUserId) {
-        fetch(`${APPS_SCRIPT_URL}?action=getHistory&lineUserId=${currentUserId}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.history) {
-              localStorage.setItem('member_history_' + currentUserId, JSON.stringify(data.history));
-              renderHistoryUI(data.history);
-            } else if (!cachedHist) {
-              historyList.innerHTML = `<p class="text-center text-slate-400 py-6">ยังไม่มีประวัติการทำรายการ</p>`;
-            }
-          })
-          .catch(() => {
-            if (!cachedHist) {
-              historyList.innerHTML = `<p class="text-center text-red-500 py-6">ไม่สามารถโหลดประวัติได้</p>`;
-            }
-          });
-      }
-    }
-
-    // ฟังก์ชัน วาดรายการประวัติลงใน HTML
-    function renderHistoryUI(historyItems) {
-      const historyList = document.getElementById('historyList');
-      if (historyItems && historyItems.length > 0) {
-        historyList.innerHTML = historyItems.map(item => {
-          const isAdd = item.type === 'ADD';
-          return `
-            <div class="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <div class="space-y-0.5">
-                <p class="font-semibold text-slate-800">${item.description || (isAdd ? 'ได้รับแต้มสะสม' : 'แลกของรางวัล/ส่วนลด')}</p>
-                <p class="text-[11px] text-slate-400">${item.date}</p>
-              </div>
-              <div class="text-right">
-                <span class="font-bold text-sm ${isAdd ? 'text-emerald-600' : 'text-red-500'}">
-                  ${isAdd ? '+' : '-'}${Number(item.points).toLocaleString()}
-                </span>
-                <p class="text-[10px] text-slate-400">คะแนน</p>
-              </div>
+  // วาดรายการประวัติ
+  function renderHistoryUI(historyItems) {
+    const historyList = $('historyList');
+    if (historyItems && historyItems.length > 0) {
+      historyList.innerHTML = historyItems.map(item => {
+        const isAdd = item.type === 'ADD';
+        const desc = item.description || (isAdd ? 'ได้รับแต้มสะสม' : 'แลกของรางวัล/ส่วนลด');
+        return `
+          <div class="item">
+            <div>
+              <div class="desc">${esc(desc)}</div>
+              <div class="date">${esc(item.date)}</div>
             </div>
-          `;
-        }).join('');
-      } else {
-        historyList.innerHTML = `<p class="text-center text-slate-400 py-6">ยังไม่มีประวัติการทำรายการ</p>`;
-      }
+            <div>
+              <div class="amt ${isAdd ? 'add' : 'use'}">${isAdd ? '+' : '−'}${Number(item.points).toLocaleString()}</div>
+              <div class="unit">คะแนน</div>
+            </div>
+          </div>`;
+      }).join('');
+    } else {
+      historyList.innerHTML = `<p class="empty">ยังไม่มีประวัติการทำรายการ</p>`;
     }
+  }
 
-    function showError(msg) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('error-msg').innerText = msg;
-      document.getElementById('error').classList.remove('hidden');
-    }
-  </script>
+  function showError(msg) {
+    $('loading').hidden = true;
+    $('error-msg').innerText = msg;
+    $('error').hidden = false;
+  }
+</script>
 </body>
 </html>
