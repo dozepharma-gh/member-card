@@ -97,6 +97,12 @@
   .empty { text-align: center; color: var(--ink-3); padding: 20px 0; font-size: 14px; }
   .consent { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--ink-2); margin-top: 10px; }
   .consent input { margin-top: 3px; width: 16px; height: 16px; }
+  .modal { position: fixed; inset: 0; background: rgba(17,18,20,.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal.show { display: flex; }
+  .sheet { background: #fff; border-radius: 20px; padding: 18px; width: 100%; max-width: 420px; border-top: 6px solid #c2c6cb; }
+  .pmName { font-size: 18px; font-weight: 600; }
+  .pmPts { font-size: 15px; margin-top: 10px; }
+  .pmPts b { font-size: 40px; font-weight: 600; }
   .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
 </style>
@@ -163,6 +169,21 @@
   </section>
 </main>
 
+<div class="modal" id="paidModal">
+  <div class="sheet">
+    <div class="muted" id="pmBill"></div>
+    <h3 id="pmTitle" style="margin:6px 0 2px">เพิ่มแต้มให้สมาชิก?</h3>
+    <div class="pmName" id="pmName"></div>
+    <div class="pmPts"><b id="pmPts">0</b> แต้ม</div>
+    <div class="muted" id="pmSub"></div>
+    <div class="msg" id="pmMsg"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost" onclick="closePaid()" id="pmCancel">ยกเลิก</button>
+      <button class="btn" onclick="confirmPaid()" id="pmOk">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
 const REWARDS = [
@@ -211,6 +232,7 @@ if (host) {
     if (m.event === 'hygeia') setConn(m.running);
     if (m.event === 'focusSearch') { switchTab('search'); $('q').focus(); $('q').select(); }
     if (m.event === 'gotoTab' && m.tab) switchTab(m.tab);
+    if (m.event === 'paid') onPaid(m);
   });
 }
 function setConn(running) {
@@ -283,15 +305,15 @@ function renderMember() {
     </div>
 
     <div class="card">
-      <h3>เพิ่มแต้มจากยอดซื้อ</h3>
-      <div class="row">
-        <input type="number" id="amt" class="amount" placeholder="0.00" min="0" step="0.01" oninput="previewPts()">
-        <button class="btn silver" style="flex:0 0 auto" onclick="pullTotal()" id="pullBtn">ดึงยอดจากไฮเจีย</button>
-      </div>
+      <details>
+      <summary>เพิ่มแต้มเอง (กรณีพิเศษ)</summary>
+      <div class="muted" style="margin:4px 0 8px">ปกติแต้มจะเด้งให้ยืนยันเองหลังกดรับเงิน (F3) ในไฮเจีย</div>
+      <input type="number" id="amt" class="amount" placeholder="0.00" min="0" step="0.01" oninput="previewPts()">
       <div class="preview" id="ptsPreview">1 บาท = 1 แต้ม</div>
       <label class="consent"><input type="checkbox" id="bonus"> เป็นแต้มพิเศษ (ไม่นับเป็นยอดซื้อ)</label>
       <button class="btn block" style="margin-top:10px" onclick="confirmPoints()" id="ptsBtn">ยืนยันเพิ่มแต้ม</button>
       <div class="msg" id="pMsg"></div>
+      </details>
     </div>
 
     <div class="card">
@@ -315,7 +337,7 @@ function renderMember() {
       <details style="margin-top:10px"><summary>ประวัติการติดตาม</summary>${fus}</details>
     </div>
 
-    <div class="card"><h3>ประวัติแต้มล่าสุด</h3>${hist}</div>`;
+    <div class="card"><details><summary>ประวัติแต้มล่าสุด</summary>${hist}</details></div>`;
 
   document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
     document.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
@@ -334,7 +356,10 @@ async function hygeiaSelect() {
   const b = $('selBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังใส่ชื่อในบิล…';
   const r = await hostCall('hygeiaSelect', { phone: current.phone });
   b.disabled = false; b.textContent = 'ใส่ชื่อลูกค้าในบิลไฮเจีย';
-  r.ok ? showMsg('hMsg', 'ใส่ชื่อ ' + esc(current.hygeiaName) + ' ในบิลแล้ว') : showMsg('hMsg', esc(r.error || 'ทำรายการไม่สำเร็จ'), 'err');
+  if (r.ok) {
+    showMsg('hMsg', 'ใส่ชื่อ ' + esc(current.hygeiaName) + ' ในบิลแล้ว · กดรับเงิน (F3) ในไฮเจียตามปกติ แล้วระบบจะถามเพิ่มแต้มให้');
+    if (r.code) api('markHygeia', { phone: current.phone, code: r.code }, true);
+  } else showMsg('hMsg', esc(r.error || 'ทำรายการไม่สำเร็จ'), 'err');
 }
 
 async function hygeiaAdd(m, btnId, msgId) {
@@ -415,6 +440,48 @@ async function addFollow() {
     loadSummary();
   } else showMsg('fuMsg', esc(r.message), 'err');
 }
+
+// ---------- เพิ่มแต้มอัตโนมัติหลังรับเงินในไฮเจีย ----------
+let paid = null;
+async function onPaid(m) {
+  const amount = Math.floor(Number(m.amount || 0));
+  if (amount <= 0) return;
+  const r = await api('findForBill', { code: m.code || '', name: m.name || '' });
+  if (!r.success) { hostHide(); return; }        // ลูกค้าในบิลไม่ใช่สมาชิก → ไม่ถาม
+  paid = { member: r.member, amount, bill: m.bill };
+  $('pmBill').textContent = 'บิล ' + (m.bill || '') + ' · ยอด ' + Number(m.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' บาท';
+  $('pmName').textContent = r.member.hygeiaName;
+  $('pmPts').textContent = fmt(amount);
+  $('pmSub').textContent = 'แต้มคงเหลือหลังเพิ่ม ' + fmt(r.member.points + amount) + ' แต้ม · ' + r.member.tierName;
+  hideMsg('pmMsg'); $('pmOk').disabled = false; $('pmCancel').disabled = false; $('pmOk').textContent = 'ยืนยัน';
+  $('paidModal').classList.add('show');
+  setTimeout(() => $('pmOk').focus(), 50);
+}
+async function confirmPaid() {
+  if (!paid) return;
+  $('pmOk').disabled = true; $('pmCancel').disabled = true; $('pmOk').innerHTML = '<span class="spin"></span>';
+  try {
+    const r = await api('addPoints', { phone: paid.member.phone, amount: paid.amount, bill: paid.bill || '' }, true);
+    if (r.success) {
+      showMsg('pmMsg', 'เพิ่ม ' + fmt(paid.amount) + ' แต้มแล้ว · คงเหลือ ' + fmt(r.totalPoints) + ' แต้ม');
+      if (current && current.phone === paid.member.phone) { current.points = r.totalPoints; current.yearlySpend = r.yearlySpend; }
+      setTimeout(closePaid, 1500);
+    } else {
+      showMsg('pmMsg', esc(r.message), r.duplicate ? 'warn' : 'err');
+      $('pmCancel').disabled = false; $('pmOk').textContent = 'ยืนยัน'; $('pmOk').disabled = !!r.duplicate;
+    }
+  } catch (e) { showMsg('pmMsg', 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง', 'err'); $('pmOk').disabled = false; $('pmCancel').disabled = false; $('pmOk').textContent = 'ยืนยัน'; }
+}
+function closePaid() {
+  $('paidModal').classList.remove('show'); paid = null;
+  current = null; $('memberArea').innerHTML = ''; $('q').value = '';
+  hostHide();
+}
+function hostHide() { if (host) host.postMessage(JSON.stringify({ cmd: 'hidePanel' })); }
+document.addEventListener('keydown', e => {
+  if (!$('paidModal').classList.contains('show')) return;
+  if (e.key === 'Escape') { e.preventDefault(); if (!$('pmCancel').disabled) closePaid(); }
+});
 
 // ---------- สมาชิกใหม่ ----------
 let pendingItems = [];
