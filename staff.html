@@ -331,7 +331,7 @@ function renderMember() {
         <button class="chip" data-d="3">+3 วัน</button><button class="chip" data-d="7">+7 วัน</button>
         <button class="chip" data-d="14">+14 วัน</button><button class="chip" data-d="28">+28 วัน</button>
       </div>
-      <label class="consent"><input type="checkbox" id="fuConsent"> ลูกค้ายินยอมให้ร้านบันทึกอาการ เพื่อติดต่อกลับติดตามผลการใช้ยา</label>
+      <label class="consent"><input type="checkbox" id="fuConsent" ${m.healthConsent === 'ยินยอม' ? 'checked' : ''}> ${m.healthConsent === 'ยินยอม' ? 'ลูกค้ายินยอมให้บันทึกอาการไว้แล้วตอนสมัคร' : 'ลูกค้ายินยอมให้ร้านบันทึกอาการ เพื่อติดต่อกลับติดตามผลการใช้ยา (ขอความยินยอมด้วยวาจา)'}</label>
       <button class="btn block" style="margin-top:10px" onclick="addFollow()" id="fuBtn">ตั้งเตือนติดตามอาการ</button>
       <div class="msg" id="fuMsg"></div>
       <details style="margin-top:10px"><summary>ประวัติการติดตาม</summary>${fus}</details>
