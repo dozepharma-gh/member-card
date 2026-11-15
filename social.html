@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ติดตามเรา – doze.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #111214; --ink-2: #3a3d42; --line: #d5d8dc; --bg: #f4f5f7;
+      --silver: linear-gradient(135deg, #fbfbfc 0%, #d5d8dc 18%, #f2f3f5 36%, #b4b8be 58%, #e6e8eb 78%, #c2c6cb 100%);
+      --silver-bar: linear-gradient(90deg, #c2c6cb 0%, #f2f3f5 30%, #b4b8be 60%, #fbfbfc 85%, #c2c6cb 100%);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); font-family: 'Kanit', sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    .brand { background: var(--ink); height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+    .brand img { width: 150px; height: auto; }
+    .brand small { font-size: 11px; letter-spacing: .3em; color: #b4b8be; }
+    .bar { height: 4px; background: var(--silver-bar); }
+    main { flex: 1; padding: 24px 20px 32px; display: flex; flex-direction: column; gap: 14px; }
+    h1 { margin: 0; font-size: 24px; font-weight: 600; }
+    .lead { margin: 2px 0 8px; font-size: 15px; font-weight: 300; color: var(--ink-2); }
+    a.item { display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; min-height: 72px; }
+    a.item:active { transform: scale(.99); }
+    a.item:focus-visible { outline: 3px solid #8a8e95; outline-offset: 2px; }
+    .ico { width: 46px; height: 46px; border-radius: 50%; background: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ico.tiktok { background: #FE2C55; }
+    .ico.facebook { background: #1877F2; }
+    .ico.instagram { background: linear-gradient(45deg, #FEDA75 0%, #FA7E1E 25%, #D62976 55%, #962FBF 80%, #4F5BD5 100%); }
+    a.item.tiktok:hover, a.item.tiktok:focus-visible { border-color: #FE2C55; }
+    a.item.facebook:hover, a.item.facebook:focus-visible { border-color: #1877F2; }
+    a.item.instagram:hover, a.item.instagram:focus-visible { border-color: #D62976; }
+    .logo { width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; display: block; }
+    .txt { display: flex; flex-direction: column; min-width: 0; }
+    .txt b { font-size: 17px; font-weight: 600; }
+    .txt span { font-size: 14px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .arrow { margin-left: auto; flex-shrink: 0; }
+    .nw { white-space: nowrap; }
+    footer { line-height: 1.7; text-align: center; font-size: 12px; color: #5c6066; padding: 0 20px 24px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand"><img src="./logo-white.png" alt="doze pharma"><small>FOLLOW US</small></header>
+  <div class="bar"></div>
+  <main>
+    <div>
+      <h1>ติดตามเรา</h1>
+      <p class="lead">ข่าวสาร โปรโมชั่น และสาระสุขภาพจากเภสัชกร</p>
+    </div>
+
+    <!-- ✏️ แก้ลิงก์ได้ที่ href ของแต่ละปุ่ม -->
+    <a class="item tiktok" href="https://www.tiktok.com/@dozepharma.th" target="_blank" rel="noopener">
+      <img class="logo" src="./icon-tiktok.png" alt="" width="46" height="46">
+      <div class="txt"><b>TikTok</b><span>@dozepharma.th</span></div>
+      <svg class="arrow" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a3d42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+
+    <a class="item facebook" href="https://www.facebook.com/share/1KrdohFWP1/" target="_blank" rel="noopener">
+      <img class="logo" src="./icon-facebook.png" alt="" width="46" height="46">
+      <div class="txt"><b>Facebook</b><span>ร้านยา โดส ฟาร์มา</span></div>
+      <svg class="arrow" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a3d42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+
+    <a class="item instagram" href="https://www.instagram.com/doze.pharma_uttaradit/" target="_blank" rel="noopener">
+      <img class="logo" src="./icon-instagram.png" alt="" width="46" height="46">
+      <div class="txt"><b>Instagram</b><span>@doze.pharma_uttaradit</span></div>
+      <svg class="arrow" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a3d42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+  </main>
+  <footer><span class="nw">ร้านยา โดส ฟาร์มา</span> · <span class="nw">สามแยกสะพานดำ ข้างโรงเรียนอนุบาลอุตรดิตถ์</span><br><span class="nw">โทร 090-9542459</span></footer>
+</div>
+</body>
+</html>
