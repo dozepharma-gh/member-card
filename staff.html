@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>doze. Member</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #111214; --ink-2: #3a3d42; --ink-3: #6b6f75; --line: #d5d8dc; --bg: #f4f5f7; --card: #fff;
+    --silver: linear-gradient(135deg, #fbfbfc 0%, #d5d8dc 18%, #f2f3f5 36%, #b4b8be 58%, #e6e8eb 78%, #c2c6cb 100%);
+    --silver-bar: linear-gradient(90deg, #c2c6cb 0%, #f2f3f5 30%, #b4b8be 60%, #fbfbfc 85%, #c2c6cb 100%);
+    --ok: #1f7a4d; --ok-bg: #e7f4ec; --warn: #8a5a00; --warn-bg: #fdf3dc; --err: #a32d2d; --err-bg: #fbeaea;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); font-family: 'Kanit', sans-serif; color: var(--ink); font-size: 15px; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; }
+  button, input, textarea, select { font-family: inherit; font-size: 15px; }
+
+  header { background: var(--ink); color: #fff; padding: 10px 14px 0; flex-shrink: 0; }
+  .top { display: flex; align-items: center; gap: 10px; }
+  .top img { height: 30px; }
+  .top .sub { font-size: 10px; letter-spacing: .3em; color: #b4b8be; }
+  .conn { margin-left: auto; font-size: 12px; display: flex; align-items: center; gap: 6px; color: #b4b8be; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #6b6f75; }
+  .dot.on { background: #3ecf8e; } .dot.off { background: #e5484d; }
+  nav { display: flex; gap: 2px; margin-top: 10px; }
+  nav button { flex: 1; background: none; border: 0; color: #b4b8be; padding: 9px 4px 10px; border-bottom: 3px solid transparent; cursor: pointer; font-size: 14px; position: relative; }
+  nav button.active { color: #fff; border-bottom-color: #e6e8eb; }
+  .badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 10px; background: #e5484d; color: #fff; font-size: 12px; line-height: 20px; margin-left: 4px; }
+  .badge.zero { display: none; }
+  .bar { height: 4px; background: var(--silver-bar); flex-shrink: 0; }
+
+  main { flex: 1; overflow-y: auto; padding: 14px; }
+  section { display: none; } section.active { display: block; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  h3 { margin: 0 0 10px; font-size: 16px; font-weight: 600; }
+  label.f { display: block; font-size: 13px; color: var(--ink-2); margin: 10px 0 4px; }
+  input[type=text], input[type=tel], input[type=number], input[type=date], textarea, select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); outline: none; }
+  input:focus, textarea:focus, select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(17,18,20,.08); }
+  textarea { resize: vertical; min-height: 64px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 12px; padding: 10px 14px; border: 1px solid var(--ink); background: var(--ink); color: #fff; cursor: pointer; font-weight: 500; }
+  .btn.ghost { background: #fff; color: var(--ink); border-color: var(--line); }
+  .btn.silver { background: var(--silver); color: var(--ink); border-color: #b4b8be; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.block { width: 100%; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { flex: 1; }
+  .chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .chip { flex: 1; padding: 7px 0; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: 14px; min-width: 56px; }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .muted { color: var(--ink-3); font-size: 13px; }
+  .msg { border-radius: 12px; padding: 10px 12px; font-size: 14px; margin-top: 10px; display: none; }
+  .msg.show { display: block; } .msg.ok { background: var(--ok-bg); color: var(--ok); } .msg.err { background: var(--err-bg); color: var(--err); } .msg.warn { background: var(--warn-bg); color: var(--warn); }
+
+  .search { display: flex; gap: 8px; }
+  .search input { font-size: 18px; padding: 12px 14px; letter-spacing: .04em; }
+  .search .btn { flex-shrink: 0; }
+
+  .mcard { border-radius: 16px; padding: 14px 16px; color: var(--ink); background: var(--silver); border: 1px solid #b4b8be; position: relative; overflow: hidden; }
+  .mcard.black { background: repeating-linear-gradient(90deg, #121315 0 2px, #17181b 2px 4px); color: #f2f3f5; border-color: #2a2c30; }
+  .mcard .tier { font-size: 11px; letter-spacing: .25em; text-transform: uppercase; opacity: .75; }
+  .mcard .name { font-size: 20px; font-weight: 600; margin-top: 4px; line-height: 1.25; }
+  .mcard .meta { font-size: 13px; opacity: .8; margin-top: 2px; }
+  .mcard .pts { position: absolute; right: 16px; top: 14px; text-align: right; }
+  .mcard .pts b { font-size: 24px; font-weight: 600; display: block; line-height: 1.1; }
+  .mcard .pts span { font-size: 11px; opacity: .75; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .tag { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: rgba(255,255,255,.55); border: 1px solid rgba(0,0,0,.12); }
+  .mcard.black .tag { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+
+  .amount { font-size: 22px; font-weight: 500; text-align: right; }
+  .preview { font-size: 13px; color: var(--ink-2); text-align: right; margin-top: 4px; }
+  details { margin-top: 4px; } summary { cursor: pointer; font-weight: 500; padding: 4px 0; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .item { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; background: #fff; }
+  .item .t { font-weight: 500; }
+  .item .s { font-size: 13px; color: var(--ink-3); }
+  .item .a { display: flex; gap: 6px; margin-top: 8px; }
+  .item.due { border-color: #e5a400; background: #fffbf0; }
+  .rwgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rw { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 12px; border-radius: 14px; border: 1px solid #b4b8be; background: var(--silver); color: var(--ink); cursor: pointer; }
+  .rw.up { background: repeating-linear-gradient(90deg, #121315 0 2px, #17181b 2px 4px); color: #f2f3f5; border-color: #2a2c30; }
+  .rw .rl { font-weight: 600; font-size: 15px; line-height: 1.25; }
+  .rw .rc { font-size: 13px; opacity: .85; }
+  .rw .rs { font-size: 12px; margin-top: 4px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,.6); color: var(--ok); }
+  .rw.up .rs { background: rgba(255,255,255,.12); color: #9be3bf; }
+  .rw:disabled { cursor: not-allowed; opacity: .55; }
+  .rw:disabled .rs { color: var(--ink-3); }
+  .rw.up:disabled .rs { color: #b4b8be; }
+  .hist { font-size: 13px; display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  .hist:last-child { border-bottom: 0; }
+  .plus { color: var(--ok); } .minus { color: var(--err); }
+  .empty { text-align: center; color: var(--ink-3); padding: 20px 0; font-size: 14px; }
+  .consent { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--ink-2); margin-top: 10px; }
+  .consent input { margin-top: 3px; width: 16px; height: 16px; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <img src="./logo-white.png" alt="doze.">
+    <div class="sub">MEMBER</div>
+    <div class="conn" id="conn"><span class="dot" id="connDot"></span><span id="connText">กำลังเชื่อมต่อ…</span></div>
+  </div>
+  <nav>
+    <button data-tab="search" class="active">ค้นหา</button>
+    <button data-tab="new">สมาชิกใหม่<span class="badge zero" id="bNew">0</span></button>
+    <button data-tab="follow">ติดตามอาการ<span class="badge zero" id="bFollow">0</span></button>
+    <button data-tab="reg">สมัครที่ร้าน</button>
+  </nav>
+</header>
+<div class="bar"></div>
+
+<main>
+  <!-- ค้นหา -->
+  <section id="tab-search" class="active">
+    <form class="search" id="searchForm" autocomplete="off">
+      <input type="tel" id="q" placeholder="สแกน QR บัตร หรือพิมพ์เบอร์" inputmode="numeric">
+      <button class="btn" type="submit">ค้นหา</button>
+    </form>
+    <div class="msg" id="searchMsg"></div>
+    <div id="memberArea" style="margin-top:12px"></div>
+  </section>
+
+  <!-- สมาชิกใหม่ -->
+  <section id="tab-new">
+    <div class="row" style="margin-bottom:10px">
+      <div class="muted">สมาชิกที่ยังไม่ได้เพิ่มลงไฮเจีย</div>
+      <button class="btn ghost" style="flex:0 0 auto" onclick="loadPending(true)">รีเฟรช</button>
+    </div>
+    <div class="list" id="pendingList"><div class="empty">กำลังโหลด…</div></div>
+  </section>
+
+  <!-- ติดตามอาการ -->
+  <section id="tab-follow">
+    <h3>ต้องติดตามวันนี้</h3>
+    <div class="list" id="dueList"><div class="empty">กำลังโหลด…</div></div>
+    <h3 style="margin-top:18px">นัดติดตามถัดไป</h3>
+    <div class="list" id="upList"></div>
+  </section>
+
+  <!-- สมัครที่ร้าน -->
+  <section id="tab-reg">
+    <div class="card">
+      <h3>สมัครสมาชิกที่หน้าร้าน</h3>
+      <div class="muted">สำหรับลูกค้าที่ไม่สะดวกสมัครผ่าน LINE (ได้ 100 แต้มต้อนรับ)</div>
+      <label class="f">ชื่อ-นามสกุล *</label><input type="text" id="rName">
+      <div class="row">
+        <div><label class="f">ชื่อเล่น</label><input type="text" id="rNick"></div>
+        <div><label class="f">เบอร์โทร *</label><input type="tel" id="rPhone" inputmode="numeric"></div>
+      </div>
+      <label class="f">วันเกิด</label><input type="date" id="rBirth">
+      <label class="consent"><input type="checkbox" id="rConsent"> ลูกค้ายินยอมให้ร้านเก็บข้อมูลเพื่อใช้ระบบสมาชิก (แจ้งตามนโยบาย PDPA ของร้านแล้ว)</label>
+      <button class="btn block" style="margin-top:12px" onclick="registerInStore()" id="rBtn">สมัครสมาชิก</button>
+      <div class="msg" id="rMsg"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
+const REWARDS = [
+  { type: 'DISCOUNT_50', label: 'ส่วนลด 50 บาท', cost: 1000 },
+  { type: 'UPGRADE_TIER2', label: 'อัปเกรดเป็น Exclusive Black Card', cost: 5000 },
+];
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => Number(n || 0).toLocaleString('th-TH');
+const fmtPhone = p => String(p || '').replace(/^(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3');
+function showMsg(el, text, kind) { el = typeof el === 'string' ? $(el) : el; el.className = 'msg show ' + (kind || 'ok'); el.innerHTML = text; }
+function hideMsg(el) { el = typeof el === 'string' ? $(el) : el; el.className = 'msg'; }
+function isoAdd(days) { const d = new Date(); d.setDate(d.getDate() + days); return d.toLocaleDateString('sv-SE'); }
+function thDate(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}/${m}/${Number(y) + 543}`; }
+
+async function api(fn, params = {}, write = false) {
+  if (write) {
+    const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'staff', fn, ...params }) });
+    return res.json();
+  }
+  const qs = new URLSearchParams({ action: 'staff', fn, ...params, _: Date.now() });
+  const res = await fetch(GAS_URL + '?' + qs.toString());
+  return res.json();
+}
+
+// ---------- bridge กับโปรแกรมบนคอม (AutoHotkey + WebView2) ----------
+const host = window.chrome && window.chrome.webview ? window.chrome.webview : null;
+const pending = {};
+let reqSeq = 0;
+function hostCall(cmd, data = {}, timeoutMs = 30000) {
+  return new Promise((resolve) => {
+    if (!host) return resolve({ ok: false, error: 'เปิดหน้านี้ในโปรแกรม doze. Member บนคอมร้านเพื่อใช้ปุ่มไฮเจีย' });
+    const id = 'r' + (++reqSeq);
+    pending[id] = resolve;
+    host.postMessage(JSON.stringify({ id, cmd, ...data }));
+    setTimeout(() => { if (pending[id]) { delete pending[id]; resolve({ ok: false, error: 'ไฮเจียไม่ตอบสนอง (หมดเวลา)' }); } }, timeoutMs);
+  });
+}
+if (host) {
+  host.addEventListener('message', ev => {
+    let m = ev.data; try { if (typeof m === 'string') m = JSON.parse(m); } catch (e) { return; }
+    if (m.id && pending[m.id]) { const r = pending[m.id]; delete pending[m.id]; r(m); return; }
+    if (m.event === 'scan' && m.text) { switchTab('search'); $('q').value = m.text; doSearch(m.text); }
+    if (m.event === 'hygeia') setConn(m.running);
+    if (m.event === 'focusSearch') { switchTab('search'); $('q').focus(); $('q').select(); }
+  });
+}
+function setConn(running) {
+  $('connDot').className = 'dot ' + (running ? 'on' : 'off');
+  $('connText').textContent = host ? (running ? 'ไฮเจียพร้อม' : 'ไม่พบไฮเจีย') : 'โหมดเว็บ';
+}
+async function checkHygeia() {
+  if (!host) { setConn(false); $('connText').textContent = 'โหมดเว็บ (ไม่มีปุ่มไฮเจีย)'; return; }
+  const r = await hostCall('status', {}, 5000);
+  setConn(r.ok && r.running);
+}
+
+// ---------- tabs ----------
+function switchTab(name) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('main section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
+  if (name === 'new') loadPending();
+  if (name === 'follow') loadFollow();
+  if (name === 'search') setTimeout(() => $('q').focus(), 50);
+}
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+// ---------- ค้นหา ----------
+let current = null;
+$('searchForm').addEventListener('submit', e => { e.preventDefault(); doSearch($('q').value); });
+
+async function doSearch(q) {
+  q = String(q || '').replace(/\D/g, '');
+  hideMsg('searchMsg');
+  if (q.length < 9) { showMsg('searchMsg', 'กรอกเบอร์โทร 10 หลัก หรือสแกน QR บัตรสมาชิก', 'err'); return; }
+  $('memberArea').innerHTML = '<div class="empty"><span class="spin"></span> กำลังค้นหา…</div>';
+  try {
+    const r = await api('search', { q });
+    if (!r.success) { current = null; $('memberArea').innerHTML = ''; showMsg('searchMsg', esc(r.message) + (r.notFound ? '<br>สมัครให้ได้ที่แท็บ "สมัครที่ร้าน"' : ''), 'err'); return; }
+    current = r.member; renderMember();
+  } catch (err) { $('memberArea').innerHTML = ''; showMsg('searchMsg', 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง', 'err'); }
+}
+
+function renderMember() {
+  const m = current; if (!m) return;
+  const black = m.tier === 'ระดับ 2';
+  const hist = (m.history || []).map(h => `<div class="hist"><span>${esc(h.date)} · ${esc(h.description)}</span><b class="${h.type === 'REDEEM' ? 'minus' : 'plus'}">${h.type === 'REDEEM' ? '−' : '+'}${fmt(h.points)}</b></div>`).join('') || '<div class="muted">ยังไม่มีประวัติ</div>';
+  const fus = (m.followups || []).map(f => `<div class="hist"><span>${thDate(f.due)} · ${esc(f.note)}</span><b>${esc(f.status)}</b></div>`).join('') || '<div class="muted">ยังไม่มีบันทึก</div>';
+  const rewardTiles = REWARDS.map(r => {
+    const done = r.type === 'UPGRADE_TIER2' && black;
+    const short = r.cost - m.points;
+    const sub = done ? 'เป็น Black Card อยู่แล้ว' : short > 0 ? `ขาดอีก ${fmt(short)} แต้ม` : 'แลกได้';
+    return `<button class="rw ${r.type === 'UPGRADE_TIER2' ? 'up' : ''}" ${done || short > 0 ? 'disabled' : ''} onclick="redeem('${r.type}')">
+      <span class="rl">${r.label}</span><span class="rc">${fmt(r.cost)} แต้ม</span><span class="rs">${sub}</span></button>`;
+  }).join('');
+  $('memberArea').innerHTML = `
+    <div class="mcard ${black ? 'black' : ''}">
+      <div class="tier">${esc(m.tierName)}</div>
+      <div class="pts"><b>${fmt(m.points)}</b><span>แต้มคงเหลือ</span></div>
+      <div class="name">${esc(m.hygeiaName)}</div>
+      <div class="meta">${fmtPhone(m.phone)}${m.birthTh ? ' · เกิด ' + esc(m.birthTh) : ''}</div>
+      <div class="tags">
+        <span class="tag">ยอดซื้อปีนี้ ${fmt(m.yearlySpend)} บาท</span>
+        ${m.hygeiaAddedAt ? '<span class="tag">อยู่ในไฮเจียแล้ว</span>' : '<span class="tag warn">ยังไม่อยู่ในไฮเจีย</span>'}
+        ${m.lineLinked ? '<span class="tag">LINE</span>' : ''}
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3>ไฮเจีย</h3>
+      ${m.hygeiaAddedAt
+        ? `<button class="btn block" id="selBtn" onclick="hygeiaSelect()">ใส่ชื่อลูกค้าในบิลไฮเจีย</button>`
+        : `<button class="btn block" id="addHBtn" onclick="hygeiaAdd(current, 'addHBtn')">เพิ่มลงไฮเจีย + ใส่ในบิล</button>`}
+      <div class="msg" id="hMsg"></div>
+    </div>
+
+    <div class="card">
+      <h3>เพิ่มแต้มจากยอดซื้อ</h3>
+      <div class="row">
+        <input type="number" id="amt" class="amount" placeholder="0.00" min="0" step="0.01" oninput="previewPts()">
+        <button class="btn silver" style="flex:0 0 auto" onclick="pullTotal()" id="pullBtn">ดึงยอดจากไฮเจีย</button>
+      </div>
+      <div class="preview" id="ptsPreview">1 บาท = 1 แต้ม</div>
+      <label class="consent"><input type="checkbox" id="bonus"> เป็นแต้มพิเศษ (ไม่นับเป็นยอดซื้อ)</label>
+      <button class="btn block" style="margin-top:10px" onclick="confirmPoints()" id="ptsBtn">ยืนยันเพิ่มแต้ม</button>
+      <div class="msg" id="pMsg"></div>
+    </div>
+
+    <div class="card">
+      <h3>แลกแต้ม</h3>
+      <div class="rwgrid">${rewardTiles}</div>
+      <div class="msg" id="rwMsg"></div>
+    </div>
+
+    <div class="card">
+      <h3>ติดตามอาการ</h3>
+      <textarea id="fuNote" placeholder="เช่น ไอ เจ็บคอ จ่าย Amoxicillin 500 mg 5 วัน"></textarea>
+      <label class="f">วันที่ติดตาม (แจ้งเตือน 10:00 น.)</label>
+      <input type="date" id="fuDate">
+      <div class="chips">
+        <button class="chip" data-d="3">+3 วัน</button><button class="chip" data-d="7">+7 วัน</button>
+        <button class="chip" data-d="14">+14 วัน</button><button class="chip" data-d="28">+28 วัน</button>
+      </div>
+      <label class="consent"><input type="checkbox" id="fuConsent"> ลูกค้ายินยอมให้ร้านบันทึกอาการ เพื่อติดต่อกลับติดตามผลการใช้ยา</label>
+      <button class="btn block" style="margin-top:10px" onclick="addFollow()" id="fuBtn">ตั้งเตือนติดตามอาการ</button>
+      <div class="msg" id="fuMsg"></div>
+      <details style="margin-top:10px"><summary>ประวัติการติดตาม</summary>${fus}</details>
+    </div>
+
+    <div class="card"><h3>ประวัติแต้มล่าสุด</h3>${hist}</div>`;
+
+  document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on'); $('fuDate').value = isoAdd(Number(c.dataset.d));
+  }));
+  $('fuDate').addEventListener('input', () => document.querySelectorAll('.chip').forEach(x => x.classList.remove('on')));
+  $('q').select();
+}
+
+function previewPts() {
+  const a = Number($('amt').value || 0);
+  $('ptsPreview').textContent = a > 0 ? `จะได้รับ ${fmt(Math.floor(a))} แต้ม` : '1 บาท = 1 แต้ม';
+}
+
+async function hygeiaSelect() {
+  const b = $('selBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังใส่ชื่อในบิล…';
+  const r = await hostCall('hygeiaSelect', { phone: current.phone });
+  b.disabled = false; b.textContent = 'ใส่ชื่อลูกค้าในบิลไฮเจีย';
+  r.ok ? showMsg('hMsg', 'ใส่ชื่อ ' + esc(current.hygeiaName) + ' ในบิลแล้ว') : showMsg('hMsg', esc(r.error || 'ทำรายการไม่สำเร็จ'), 'err');
+}
+
+async function hygeiaAdd(m, btnId, msgId) {
+  const b = $(btnId); const label = b.textContent;
+  b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังเพิ่มในไฮเจีย…';
+  const r = await hostCall('hygeiaAdd', { member: { name: m.hygeiaName, phone: m.phone, group: m.hygeiaGroup, birth: m.birthTh } }, 60000);
+  if (r.ok) {
+    await api('markHygeia', { phone: m.phone, code: r.code || '' }, true);
+    m.hygeiaAddedAt = 'now';
+    const msg = 'เพิ่ม ' + esc(m.hygeiaName) + ' ในไฮเจียแล้ว' + (r.code ? ' (' + esc(r.code) + ')' : '');
+    if (msgId) showMsg(msgId, msg); else { renderMember(); showMsg('hMsg', msg); }
+    loadSummary();
+  } else {
+    b.disabled = false; b.textContent = label;
+    showMsg(msgId || 'hMsg', esc(r.error || 'เพิ่มไม่สำเร็จ'), 'err');
+  }
+  return r.ok;
+}
+
+async function pullTotal() {
+  const b = $('pullBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+  const r = await hostCall('hygeiaTotal', {}, 10000);
+  b.disabled = false; b.textContent = 'ดึงยอดจากไฮเจีย';
+  if (r.ok && Number(r.total) >= 0) { $('amt').value = Number(r.total).toFixed(2); previewPts(); hideMsg('pMsg'); }
+  else showMsg('pMsg', esc(r.error || 'อ่านยอดจากไฮเจียไม่ได้ พิมพ์ยอดเองได้เลย'), 'warn');
+}
+
+async function confirmPoints() {
+  const amount = Math.floor(Number($('amt').value || 0));
+  if (amount <= 0) { showMsg('pMsg', 'ใส่ยอดซื้อก่อน', 'err'); return; }
+  const bonus = $('bonus').checked;
+  if (!confirm(`ยืนยันเพิ่ม ${fmt(amount)} แต้ม ให้ ${current.hygeiaName}?`)) return;
+  const b = $('ptsBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังบันทึก…';
+  try {
+    const r = await api('addPoints', { phone: current.phone, amount, bonus }, true);
+    if (r.success) {
+      current.points = r.totalPoints; current.yearlySpend = r.yearlySpend;
+      current.history = [{ date: 'เมื่อสักครู่', type: 'ADD', points: amount, description: bonus ? 'คะแนนพิเศษ' : 'ซื้อสินค้า' }].concat(current.history || []);
+      renderMember(); showMsg('pMsg', `เพิ่ม ${fmt(amount)} แต้มแล้ว · คงเหลือ ${fmt(r.totalPoints)} แต้ม`);
+    } else { b.disabled = false; b.textContent = 'ยืนยันเพิ่มแต้ม'; showMsg('pMsg', esc(r.message), 'err'); }
+  } catch (e) { b.disabled = false; b.textContent = 'ยืนยันเพิ่มแต้ม'; showMsg('pMsg', 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง', 'err'); }
+}
+
+async function redeem(type) {
+  const rw = REWARDS.find(r => r.type === type);
+  if (!rw || current.points < rw.cost) { showMsg('rwMsg', 'แต้มไม่พอ', 'err'); return; }
+  if (!confirm(`ยืนยันแลก "${rw.label}" ใช้ ${fmt(rw.cost)} แต้ม?`)) return;
+  if (type === 'UPGRADE_TIER2' && current.tier === 'ระดับ 2') { showMsg('rwMsg', 'เป็น Exclusive Black Card อยู่แล้ว', 'err'); return; }
+  document.querySelectorAll('.rw').forEach(x => x.disabled = true);
+  showMsg('rwMsg', '<span class="spin"></span> กำลังทำรายการ…', 'ok');
+  const r = await api('redeem', { phone: current.phone, type }, true);
+  if (!r.success) document.querySelectorAll('.rw').forEach(x => x.disabled = false);
+  if (!r.success) { showMsg('rwMsg', esc(r.message), 'err'); return; }
+  const phone = current.phone;
+  await doSearch(phone);
+  if (type === 'UPGRADE_TIER2') {
+    showMsg('rwMsg', esc(r.message) + '<br><span class="spin"></span> กำลังเปลี่ยนกลุ่มในไฮเจียเป็น Exclusive Black Card (1314)…', 'ok');
+    const h = await hostCall('hygeiaSetGroup', { phone, group: '1314' }, 60000);
+    h.ok ? showMsg('rwMsg', esc(r.message) + '<br>เปลี่ยนกลุ่มในไฮเจียเป็น Exclusive Black Card (1314) แล้ว')
+         : showMsg('rwMsg', esc(r.message) + '<br>แต่เปลี่ยนกลุ่มในไฮเจียไม่สำเร็จ: ' + esc(h.error || '') + '<br>กรุณาเปลี่ยนกลุ่มลูกค้าในไฮเจียเป็น 1314 เอง', 'warn');
+  } else {
+    showMsg('rwMsg', esc(r.message) + '<br>อย่าลืมใส่ส่วนลด 50 บาทในบิลไฮเจีย (ลดท้ายบิล F5)');
+  }
+}
+
+async function addFollow() {
+  const note = $('fuNote').value.trim(), due = $('fuDate').value;
+  if (!note) { showMsg('fuMsg', 'กรอกอาการหรือรายละเอียดก่อน', 'err'); return; }
+  if (!due) { showMsg('fuMsg', 'เลือกวันที่ติดตาม', 'err'); return; }
+  if (!$('fuConsent').checked) { showMsg('fuMsg', 'ต้องได้รับความยินยอมจากลูกค้าก่อนบันทึกอาการ', 'err'); return; }
+  const b = $('fuBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังตั้งเตือน…';
+  const r = await api('followupAdd', { phone: current.phone, name: current.hygeiaName, note, due, consent: true }, true);
+  b.disabled = false; b.textContent = 'ตั้งเตือนติดตามอาการ';
+  if (r.success) {
+    current.followups = [{ due, note, status: 'รอติดตาม' }].concat(current.followups || []);
+    renderMember();
+    showMsg('fuMsg', `ตั้งเตือนวันที่ ${thDate(due)} 10:00 น. แล้ว` + (r.calendar ? ' (ลง Google Calendar แล้ว)' : ' — ลง Calendar ไม่สำเร็จ'), r.calendar ? 'ok' : 'warn');
+    loadSummary();
+  } else showMsg('fuMsg', esc(r.message), 'err');
+}
+
+// ---------- สมาชิกใหม่ ----------
+let pendingItems = [];
+async function loadPending(force) {
+  try {
+    const r = await api('pending');
+    pendingItems = r.items || [];
+    $('bNew').textContent = pendingItems.length; $('bNew').classList.toggle('zero', !pendingItems.length);
+    $('pendingList').innerHTML = pendingItems.length ? pendingItems.slice().reverse().map((m, i) => `
+      <div class="item">
+        <div class="t">${esc(m.hygeiaName)}</div>
+        <div class="s">${fmtPhone(m.phone)} · ${esc(m.tierName)}${m.birthTh ? ' · เกิด ' + esc(m.birthTh) : ''}<br>สมัครเมื่อ ${esc(m.registeredAt)}</div>
+        <div class="a"><button class="btn" id="pa${i}" onclick="addPending(${pendingItems.length - 1 - i}, 'pa${i}', 'pm${i}')">เพิ่มลงไฮเจีย</button>
+        <button class="btn ghost" onclick="openMember('${m.phone}')">เปิดข้อมูล</button></div>
+        <div class="msg" id="pm${i}"></div>
+      </div>`).join('') : '<div class="empty">ไม่มีสมาชิกใหม่ที่รอเพิ่ม</div>';
+  } catch (e) { $('pendingList').innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; }
+}
+async function addPending(idx, btnId, msgId) {
+  const ok = await hygeiaAdd(pendingItems[idx], btnId, msgId);
+  if (ok) setTimeout(loadPending, 1500);
+}
+function openMember(phone) { switchTab('search'); $('q').value = phone; doSearch(phone); }
+
+// ---------- ติดตามอาการ ----------
+async function loadFollow() {
+  try {
+    const r = await api('followupList');
+    const card = (f, due) => `
+      <div class="item ${due ? 'due' : ''}">
+        <div class="t">${esc(f.name)}</div>
+        <div class="s">${thDate(f.due)} · ${fmtPhone(f.phone)}</div>
+        <div style="margin-top:6px">${esc(f.note)}</div>
+        ${due ? `<div class="a"><input type="text" id="res-${f.id}" placeholder="ผลการติดตาม เช่น อาการดีขึ้น"><button class="btn" style="flex:0 0 auto" onclick="doneFollow('${f.id}')">ติดตามแล้ว</button></div>` : ''}
+        <div class="a"><button class="btn ghost" onclick="openMember('${f.phone}')">เปิดข้อมูลลูกค้า</button></div>
+      </div>`;
+    $('dueList').innerHTML = r.due.length ? r.due.map(f => card(f, true)).join('') : '<div class="empty">วันนี้ไม่มีรายการที่ต้องติดตาม</div>';
+    $('upList').innerHTML = r.upcoming.length ? r.upcoming.map(f => card(f, false)).join('') : '<div class="empty">ยังไม่มีนัดติดตาม</div>';
+    setFollowBadge(r.counts.due);
+  } catch (e) { $('dueList').innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; }
+}
+async function doneFollow(id) {
+  const result = ($('res-' + id) || {}).value || '';
+  const r = await api('followupDone', { id, result }, true);
+  if (r.success) loadFollow(); else alert(r.message);
+}
+function setFollowBadge(n) { $('bFollow').textContent = n; $('bFollow').classList.toggle('zero', !n); }
+
+// ---------- สมัครที่ร้าน ----------
+async function registerInStore() {
+  const fullName = $('rName').value.trim(), nickname = $('rNick').value.trim(), phone = $('rPhone').value.replace(/\D/g, ''), birthdate = $('rBirth').value;
+  if (!fullName || phone.length < 9) { showMsg('rMsg', 'กรอกชื่อและเบอร์โทรให้ครบ', 'err'); return; }
+  if (!$('rConsent').checked) { showMsg('rMsg', 'ต้องได้รับความยินยอมจากลูกค้าก่อน', 'err'); return; }
+  const b = $('rBtn'); b.disabled = true;
+  const r = await api('register', { fullName, nickname, phone, birthdate }, true);
+  b.disabled = false;
+  if (r.success) {
+    showMsg('rMsg', esc(r.message) + ' — กำลังเปิดข้อมูลเพื่อเพิ่มลงไฮเจีย');
+    ['rName', 'rNick', 'rPhone', 'rBirth'].forEach(id => $(id).value = ''); $('rConsent').checked = false;
+    setTimeout(() => openMember(phone), 800); loadSummary();
+  } else showMsg('rMsg', esc(r.message), 'err');
+}
+
+// ---------- สรุปตัวเลข + รีเฟรชอัตโนมัติ ----------
+let lastPending = -1;
+async function loadSummary() {
+  try {
+    const r = await api('summary');
+    if (!r.success) return;
+    $('bNew').textContent = r.pending; $('bNew').classList.toggle('zero', !r.pending);
+    setFollowBadge(r.followups.due);
+    if (lastPending >= 0 && r.pending > lastPending && host) host.postMessage(JSON.stringify({ cmd: 'notify', text: 'มีสมาชิกใหม่ ' + r.pending + ' คน' }));
+    lastPending = r.pending;
+    if ($('tab-new').classList.contains('active')) loadPending();
+  } catch (e) {}
+}
+
+setInterval(loadSummary, 15000);
+setInterval(checkHygeia, 20000);
+loadSummary(); checkHygeia(); $('q').focus();
+</script>
+</body>
+</html>
