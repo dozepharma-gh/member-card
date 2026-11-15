@@ -217,6 +217,7 @@
         if (data.success) {
           try { localStorage.setItem('member_card_' + lineUserId, JSON.stringify(data)); } catch (e) {}
           renderCard(data);
+          if (data.introduced === false) introduceInChat(lineUserId, data.displayName || data.fullName);
         } else if (!isRendered) {
           showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
         }
@@ -224,6 +225,21 @@
       .catch(() => {
         if (!isRendered) showError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
       });
+  }
+
+  // ส่งข้อความแนะนำตัวเข้าแชทร้าน 1 ครั้ง (ในนามลูกค้า) เพื่อให้แอดมินรู้ว่าแชทนี้คือสมาชิกคนไหน
+  // ต้องเปิด scope chat_message.write ให้ LIFF นี้ และต้องเปิดจากแชทของร้าน (rich menu) — ถ้าส่งไม่ได้จะข้ามไปเงียบ ๆ
+  let introSent = false;
+  async function introduceInChat(lineUserId, name) {
+    if (introSent || !name) return;
+    introSent = true;
+    try {
+      if (!liff.isInClient()) return;
+      await liff.sendMessages([{ type: "text", text: "🔖 สมาชิก doze.\n" + name }]);
+      fetch(`${APPS_SCRIPT_URL}?action=markIntroduced&lineUserId=${encodeURIComponent(lineUserId)}`).catch(() => {});
+    } catch (err) {
+      console.warn("sendMessages skipped:", err);
+    }
   }
 
   function renderCard(data) {
