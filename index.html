@@ -218,6 +218,10 @@
           try { localStorage.setItem('member_card_' + lineUserId, JSON.stringify(data)); } catch (e) {}
           renderCard(data);
           if (data.introduced === false) introduceInChat(lineUserId, data.displayName || data.fullName);
+        } else if (/ไม่พบข้อมูลสมาชิก/.test(data.message || "")) {
+          // ยังไม่เป็นสมาชิก → พาไปหน้าสมัครสมาชิกอัตโนมัติ (ปุ่มเดียวใน rich menu ใช้ได้ทั้งสมัครและดูบัตร)
+          try { localStorage.removeItem('member_card_' + lineUserId); } catch (e) {}
+          goToRegister();
         } else if (!isRendered) {
           showError(data.message || "ไม่พบข้อมูลสมาชิกในระบบ");
         }
@@ -344,6 +348,15 @@
     } else {
       historyList.innerHTML = `<p class="empty">ยังไม่มีประวัติการทำรายการ</p>`;
     }
+  }
+
+  const REGISTER_LIFF_URL = "https://liff.line.me/2011856114-65vmtqaU";
+  function goToRegister() {
+    $('cardWrap').hidden = true;
+    $('error').hidden = true;
+    $('loading').hidden = false;
+    $('loading').lastChild.textContent = " ยังไม่ได้เป็นสมาชิก กำลังพาไปหน้าสมัครสมาชิก...";
+    setTimeout(() => { window.location.href = REGISTER_LIFF_URL; }, 600);
   }
 
   function showError(msg) {
