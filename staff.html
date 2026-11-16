@@ -606,6 +606,7 @@ function setFollowBadge(n) { $('bFollow').textContent = n; $('bFollow').classLis
 async function registerInStore() {
   const fullName = $('rName').value.trim(), nickname = $('rNick').value.trim(), phone = $('rPhone').value.replace(/\D/g, ''), birthdate = $('rBirth').value;
   if (!fullName || phone.length < 9) { showMsg('rMsg', 'กรอกชื่อและเบอร์โทรให้ครบ', 'err'); return; }
+  if (!/^0[689]\d{8}$/.test(phone) && !/^0[2-57]\d{7}$/.test(phone)) { showMsg('rMsg', 'เบอร์โทรไม่ถูกต้อง — มือถือต้องมี 10 หลัก เช่น 0812345678', 'err'); return; }
   if (!$('rConsent').checked) { showMsg('rMsg', 'ต้องได้รับความยินยอมจากลูกค้าก่อน', 'err'); return; }
   const b = $('rBtn'); b.disabled = true;
   const r = await api('register', { fullName, nickname, phone, birthdate, consent: true, consentVersion: 'v2-2026-11-store', marketingConsent: $('rMarketing').checked, healthConsent: true }, true);

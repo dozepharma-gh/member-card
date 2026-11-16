@@ -10,8 +10,12 @@
   <meta http-equiv="Expires" content="0">
 
   <title>บัตรสมาชิก doze.</title>
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://static.line-scdn.net">
+  <link rel="preconnect" href="https://api.line.me">
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -175,6 +179,8 @@
   </div>
 </div>
 
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   const MY_LIFF_ID = "2011856114-wFeurW8T";
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZrpSY8vomB2JwzZvXvv1JAeoiUSsQh6VCG1GAwbzC_JvFqlDogeED5GWJbGQQnwVI/exec";
@@ -185,21 +191,31 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  window.onload = function () {
+  // เริ่มทันที ไม่ต้องรอรูป/ฟอนต์โหลดครบ (เดิมใช้ window.onload ซึ่งรอทุกอย่าง)
+  (function start() {
     liff.init({ liffId: MY_LIFF_ID })
       .then(() => {
         if (!liff.isLoggedIn()) {
           liff.login();
-        } else {
-          liff.getProfile().then(profile => {
-            currentUserId = profile.userId;
-            loadFromCache(currentUserId);
-            fetchMemberData(currentUserId);
-          }).catch(err => showError("ไม่สามารถดึงโปรไฟล์ LINE ได้: " + err));
+          return;
         }
+        // userId จาก context มีทันทีหลัง init (ไม่ต้องรอ getProfile อีกรอบ)
+        const ctx = liff.getContext && liff.getContext();
+        const quickId = ctx && ctx.userId;
+        if (quickId) {
+          currentUserId = quickId;
+          loadFromCache(currentUserId);
+          fetchMemberData(currentUserId);
+          return;
+        }
+        liff.getProfile().then(profile => {
+          currentUserId = profile.userId;
+          loadFromCache(currentUserId);
+          fetchMemberData(currentUserId);
+        }).catch(err => showError("ไม่สามารถดึงโปรไฟล์ LINE ได้: " + err));
       })
       .catch(err => showError("เกิดข้อผิดพลาดในการเริ่มต้น LIFF: " + err));
-  };
+  })();
 
   function loadFromCache(userId) {
     try {
@@ -356,7 +372,7 @@
     $('error').hidden = true;
     $('loading').hidden = false;
     $('loading').lastChild.textContent = " ยังไม่ได้เป็นสมาชิก กำลังพาไปหน้าสมัครสมาชิก...";
-    setTimeout(() => { window.location.href = REGISTER_LIFF_URL; }, 600);
+    window.location.replace(REGISTER_LIFF_URL);
   }
 
   function showError(msg) {
