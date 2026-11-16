@@ -206,14 +206,23 @@ function hideMsg(el) { el = typeof el === 'string' ? $(el) : el; el.className = 
 function isoAdd(days) { const d = new Date(); d.setDate(d.getDate() + days); return d.toLocaleDateString('sv-SE'); }
 function thDate(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}/${m}/${Number(y) + 543}`; }
 
-async function api(fn, params = {}, write = false) {
-  if (write) {
-    const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'staff', fn, ...params }) });
-    return res.json();
-  }
-  const qs = new URLSearchParams({ action: 'staff', fn, ...params, _: Date.now() });
-  const res = await fetch(GAS_URL + '?' + qs.toString());
-  return res.json();
+// เรียกระบบหลังบ้าน — มีเวลาจำกัด ไม่ให้ค้างไม่รู้จบ (อ่าน 20 วิ, เขียน 40 วิ)
+async function api(fn, params = {}, write = false, timeoutMs) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), timeoutMs || (write ? 40000 : 20000));
+  try {
+    let res;
+    if (write) {
+      res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'staff', fn, ...params }), signal: ctl.signal });
+    } else {
+      const qs = new URLSearchParams({ action: 'staff', fn, ...params, _: Date.now() });
+      res = await fetch(GAS_URL + '?' + qs.toString(), { signal: ctl.signal });
+    }
+    return await res.json();
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('ระบบตอบช้าเกินไป ลองใหม่อีกครั้ง');
+    throw e;
+  } finally { clearTimeout(t); }
 }
 
 // ---------- bridge กับโปรแกรมบนคอม (AutoHotkey + WebView2) ----------
@@ -367,16 +376,21 @@ async function hygeiaSelect() {
   } else showMsg('hMsg', esc(r.error || 'ทำรายการไม่สำเร็จ'), 'err');
 }
 
-const addingNow = new Set();
+const addingNow = new Map();   // เบอร์ → เวลาที่เริ่มเพิ่ม (กันกดซ้ำระหว่างกำลังเพิ่ม)
 async function hygeiaAdd(m, btnId, msgId) {
   const b = $(btnId); const label = b.textContent;
-  if (addingNow.has(m.phone)) return false;            // กันกดซ้ำระหว่างกำลังเพิ่ม
-  addingNow.add(m.phone);
+  const startedAt = addingNow.get(m.phone);
+  if (startedAt && Date.now() - startedAt < 90000) {
+    const w = 'กำลังเพิ่ม ' + esc(m.hygeiaName) + ' อยู่ — รอสักครู่';
+    if (msgId) showMsg(msgId, w, 'warn'); else showMsg('hMsg', w, 'warn');
+    return false;
+  }
+  addingNow.set(m.phone, Date.now());
   b.disabled = true; b.innerHTML = '<span class="spin"></span> ตรวจว่ามีในไฮเจียแล้วหรือยัง…';
   try {
     // เช็กสถานะล่าสุดจากระบบก่อน เผื่อมีคนเพิ่มไปแล้วจากหน้าอื่น
     try {
-      const chk = await api('search', { q: m.phone });
+      const chk = await api('search', { q: m.phone }, false, 8000);   // เช็กไม่ทันใน 8 วิ → ข้าม (โปรแกรมบนคอมกันซ้ำอีกชั้น)
       if (chk.success && chk.member && chk.member.hygeiaAddedAt) {
         m.hygeiaAddedAt = chk.member.hygeiaAddedAt;
         if (current && current.phone === m.phone) current.hygeiaAddedAt = chk.member.hygeiaAddedAt;
