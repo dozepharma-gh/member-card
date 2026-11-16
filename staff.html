@@ -129,6 +129,7 @@
     <form class="search" id="searchForm" autocomplete="off">
       <input type="tel" id="q" placeholder="สแกน QR บัตร หรือพิมพ์เบอร์" inputmode="numeric">
       <button class="btn" type="submit">ค้นหา</button>
+      <button class="btn ghost" type="button" onclick="clearSearch()" title="ล้างหน้าจอ (Esc)">ล้าง</button>
     </form>
     <div class="msg" id="searchMsg"></div>
     <div id="memberArea" style="margin-top:12px"></div>
@@ -138,7 +139,7 @@
   <section id="tab-new">
     <div class="row" style="margin-bottom:10px">
       <div class="muted">สมาชิกที่ยังไม่ได้เพิ่มลงไฮเจีย</div>
-      <button class="btn ghost" style="flex:0 0 auto" onclick="loadPending(true)">รีเฟรช</button>
+      <button class="btn ghost" style="flex:0 0 auto" onclick="loadPending(true)">รีเฟรช / ล้าง</button>
     </div>
     <div class="list" id="pendingList"><div class="empty">กำลังโหลด…</div></div>
   </section>
@@ -164,7 +165,10 @@
       <label class="f">วันเกิด</label><input type="date" id="rBirth">
       <label class="consent"><input type="checkbox" id="rConsent"> <span><b>(จำเป็น)</b> ลูกค้ายินยอมให้ร้านเก็บและใช้ข้อมูลส่วนบุคคล รวมถึงข้อมูลสุขภาพ (อาการและยาที่ได้รับ) เพื่อใช้ระบบสมาชิก สะสมแต้ม และให้เภสัชกรติดต่อติดตามอาการและผลการใช้ยา — แจ้งตามนโยบาย PDPA ของร้านแล้ว</span></label>
       <label class="consent"><input type="checkbox" id="rMarketing"> <span>(ไม่บังคับ) ลูกค้ายินยอมรับข่าวสารและโปรโมชันจากร้าน</span></label>
-      <button class="btn block" style="margin-top:12px" onclick="registerInStore()" id="rBtn">สมัครสมาชิก</button>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" style="flex:1" onclick="registerInStore()" id="rBtn">สมัครสมาชิก</button>
+        <button class="btn ghost" style="flex:0 0 auto" type="button" onclick="clearRegForm()">ล้างฟอร์ม</button>
+      </div>
       <div class="msg" id="rMsg"></div>
     </div>
   </section>
@@ -576,6 +580,20 @@ async function addPending(idx, btnId, msgId) {
   const ok = await hygeiaAdd(pendingItems[idx], btnId, msgId);
   if (ok) setTimeout(loadPending, 1500);
 }
+function clearSearch() {
+  current = null; $('memberArea').innerHTML = ''; $('q').value = ''; hideMsg('searchMsg');
+  $('q').focus();
+}
+function clearRegForm() {
+  ['rName', 'rNick', 'rPhone', 'rBirth'].forEach(id => $(id).value = '');
+  $('rConsent').checked = false; $('rMarketing').checked = false; hideMsg('rMsg');
+  $('rName').focus();
+}
+// Esc ที่แท็บค้นหา = ล้างหน้าจอพร้อมรับลูกค้าคนถัดไป (ยกเว้นตอนกล่องเพิ่มแต้มเปิดอยู่)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || $('paidModal').classList.contains('show')) return;
+  if ($('tab-search').classList.contains('active') && (current || $('q').value)) { e.preventDefault(); clearSearch(); }
+});
 function openMember(phone) { switchTab('search'); $('q').value = phone; doSearch(phone); }
 
 // ---------- ติดตามอาการ ----------
