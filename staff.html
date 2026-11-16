@@ -416,7 +416,11 @@ async function hygeiaAdd(m, btnId, msgId) {
 
 async function afterAdd(m, r, b, label, msgId) {
   if (r.ok) {
-    await api('markHygeia', { phone: m.phone, code: r.code || '' }, true);
+    // บันทึกว่าเพิ่มแล้ว — ลองซ้ำได้ 3 ครั้ง เผื่อระบบตอบช้า (ไม่งั้นชื่อจะค้างในรายการสมาชิกใหม่)
+    for (let i = 0; i < 3; i++) {
+      try { const w = await api('markHygeia', { phone: m.phone, code: r.code || '' }, true); if (w && w.success) break; } catch (e) {}
+      await new Promise(res => setTimeout(res, 1500));
+    }
     m.hygeiaAddedAt = 'now';
     const msg = 'เพิ่ม ' + esc(m.hygeiaName) + ' ในไฮเจียแล้ว' + (r.code ? ' (' + esc(r.code) + ')' : '');
     if (msgId) showMsg(msgId, msg); else { renderMember(); showMsg('hMsg', msg); }
@@ -578,7 +582,10 @@ let pendingItems = [];
 async function loadPending(force) {
   try {
     const r = await api('pending');
-    pendingItems = r.items || [];
+    // คนที่มีรหัสลูกค้าไฮเจียแล้ว (เช่น เคยถูกใส่ในบิล) = อยู่ในไฮเจียแล้ว → บันทึกให้ และไม่ต้องแสดง
+    const already = (r.items || []).filter(m => m.hygeiaCode);
+    already.forEach(m => api('markHygeia', { phone: m.phone, code: m.hygeiaCode }, true).catch(() => {}));
+    pendingItems = (r.items || []).filter(m => !m.hygeiaCode);
     $('bNew').textContent = pendingItems.length; $('bNew').classList.toggle('zero', !pendingItems.length);
     $('pendingList').innerHTML = pendingItems.length ? pendingItems.slice().reverse().map((m, i) => `
       <div class="item">
