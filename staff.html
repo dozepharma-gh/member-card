@@ -162,7 +162,8 @@
         <div><label class="f">เบอร์โทร *</label><input type="tel" id="rPhone" inputmode="numeric"></div>
       </div>
       <label class="f">วันเกิด</label><input type="date" id="rBirth">
-      <label class="consent"><input type="checkbox" id="rConsent"> ลูกค้ายินยอมให้ร้านเก็บข้อมูลเพื่อใช้ระบบสมาชิก (แจ้งตามนโยบาย PDPA ของร้านแล้ว)</label>
+      <label class="consent"><input type="checkbox" id="rConsent"> <span><b>(จำเป็น)</b> ลูกค้ายินยอมให้ร้านเก็บและใช้ข้อมูลส่วนบุคคล รวมถึงข้อมูลสุขภาพ (อาการและยาที่ได้รับ) เพื่อใช้ระบบสมาชิก สะสมแต้ม และให้เภสัชกรติดต่อติดตามอาการและผลการใช้ยา — แจ้งตามนโยบาย PDPA ของร้านแล้ว</span></label>
+      <label class="consent"><input type="checkbox" id="rMarketing"> <span>(ไม่บังคับ) ลูกค้ายินยอมรับข่าวสารและโปรโมชันจากร้าน</span></label>
       <button class="btn block" style="margin-top:12px" onclick="registerInStore()" id="rBtn">สมัครสมาชิก</button>
       <div class="msg" id="rMsg"></div>
     </div>
@@ -607,11 +608,11 @@ async function registerInStore() {
   if (!fullName || phone.length < 9) { showMsg('rMsg', 'กรอกชื่อและเบอร์โทรให้ครบ', 'err'); return; }
   if (!$('rConsent').checked) { showMsg('rMsg', 'ต้องได้รับความยินยอมจากลูกค้าก่อน', 'err'); return; }
   const b = $('rBtn'); b.disabled = true;
-  const r = await api('register', { fullName, nickname, phone, birthdate }, true);
+  const r = await api('register', { fullName, nickname, phone, birthdate, consent: true, consentVersion: 'v2-2026-11-store', marketingConsent: $('rMarketing').checked, healthConsent: true }, true);
   b.disabled = false;
   if (r.success) {
     showMsg('rMsg', esc(r.message) + ' — กำลังเปิดข้อมูลเพื่อเพิ่มลงไฮเจีย');
-    ['rName', 'rNick', 'rPhone', 'rBirth'].forEach(id => $(id).value = ''); $('rConsent').checked = false;
+    ['rName', 'rNick', 'rPhone', 'rBirth'].forEach(id => $(id).value = ''); $('rConsent').checked = false; $('rMarketing').checked = false;
     setTimeout(() => openMember(phone), 800); loadSummary();
   } else showMsg('rMsg', esc(r.message), 'err');
 }
