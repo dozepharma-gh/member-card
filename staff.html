@@ -372,11 +372,22 @@ async function hygeiaAdd(m, btnId, msgId) {
     const msg = 'เพิ่ม ' + esc(m.hygeiaName) + ' ในไฮเจียแล้ว' + (r.code ? ' (' + esc(r.code) + ')' : '');
     if (msgId) showMsg(msgId, msg); else { renderMember(); showMsg('hMsg', msg); }
     loadSummary();
+    if (r.birthOk === 0) showMsg(msgId || 'hMsg', msg + '<br>วันเกิดอาจยังไม่ได้ใส่ — ตรวจในไฮเจียอีกครั้ง', 'warn');
   } else {
     b.disabled = false; b.textContent = label;
-    showMsg(msgId || 'hMsg', esc(r.error || 'เพิ่มไม่สำเร็จ'), 'err');
+    showMsg(msgId || 'hMsg', esc(r.error || 'เพิ่มไม่สำเร็จ') +
+      `<div style="margin-top:8px"><button class="btn ghost" onclick="markManual('${m.phone}', '${msgId || 'hMsg'}')">ฉันเพิ่มในไฮเจียเองแล้ว</button></div>`, 'err');
   }
   return r.ok;
+}
+
+async function markManual(phone, msgId) {
+  const r = await api('markHygeia', { phone, code: '' }, true);
+  if (r.success) {
+    showMsg(msgId, 'บันทึกว่าเพิ่มในไฮเจียแล้ว');
+    if (current && current.phone === phone) { current.hygeiaAddedAt = 'manual'; setTimeout(renderMember, 800); }
+    loadSummary(); setTimeout(loadPending, 800);
+  } else showMsg(msgId, esc(r.message), 'err');
 }
 
 async function pullTotal() {
