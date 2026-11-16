@@ -484,11 +484,38 @@ async function addFollow() {
 
 // ---------- เพิ่มแต้มอัตโนมัติหลังรับเงินในไฮเจีย ----------
 let paid = null;
+setTimeout(() => hostLog('page-ready paid-ack'), 500);
+function hostLog(text) { try { if (host) host.postMessage(JSON.stringify({ cmd: 'log', text: String(text).slice(0, 300) })); } catch (e) {} }
+const seenBills = new Set();
 async function onPaid(m) {
   const amount = Math.floor(Number(m.amount || 0));
+  if (m.bill && seenBills.has(m.bill)) { hostLog('paid-recv ' + m.bill + ' (ซ้ำ)'); return; }
+  if (m.bill) seenBills.add(m.bill);
+  hostLog('paid-recv ' + (m.bill || '') + ' ' + (m.code || '') + ' amount=' + amount);
   if (amount <= 0) return;
-  const r = await api('findForBill', { code: m.code || '', name: m.name || '' });
-  if (!r.success) { hostHide(); return; }        // ลูกค้าในบิลไม่ใช่สมาชิก → ไม่ถาม
+  let r = null, lastErr = '', netErr = false;
+  for (let i = 0; i < 4 && !r; i++) {               // ลองซ้ำ เผื่อเน็ตสะดุด / ระบบยังบันทึกรหัสไม่ทัน
+    try {
+      const x = await api('findForBill', { code: m.code || '', name: m.name || '' });
+      if (x.success) r = x;
+      else { lastErr = x.message || 'ไม่พบสมาชิก'; netErr = !x.notFound; if (x.notFound && i >= 1) break; }
+    } catch (e) { lastErr = (e && e.message) || 'เชื่อมต่อระบบไม่ได้'; netErr = true; }
+    if (!r && i < 3) await new Promise(res => setTimeout(res, 2000));
+  }
+  hostLog('paid-find ' + (m.bill || '') + ' ' + (r ? 'ok ' + r.member.phone : 'fail ' + lastErr));
+  if (!r) {
+    if (!netErr) { hostHide(); return; }            // ลูกค้าในบิลไม่ใช่สมาชิก → ไม่ถาม
+    // เชื่อมต่อระบบไม่ได้ → แจ้งให้เห็น ไม่เงียบหาย
+    paid = null;
+    $('pmBill').textContent = 'บิล ' + (m.bill || '') + ' · ยอด ' + Number(m.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' บาท';
+    $('pmName').textContent = (m.name || m.code);
+    $('pmPts').textContent = fmt(amount);
+    $('pmSub').textContent = '';
+    showMsg('pmMsg', 'หาสมาชิกคนนี้ในระบบไม่ได้ (' + esc(lastErr) + ')<br>เพิ่มแต้มเองได้ที่แท็บค้นหา → "เพิ่มแต้มเอง"', 'err');
+    $('pmOk').disabled = true; $('pmCancel').disabled = false;
+    $('paidModal').classList.add('show');
+    return;
+  }
   paid = { member: r.member, amount, bill: m.bill };
   $('pmBill').textContent = 'บิล ' + (m.bill || '') + ' · ยอด ' + Number(m.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' บาท';
   $('pmName').textContent = r.member.hygeiaName;
@@ -496,6 +523,7 @@ async function onPaid(m) {
   $('pmSub').textContent = 'แต้มคงเหลือหลังเพิ่ม ' + fmt(r.member.points + amount) + ' แต้ม · ' + r.member.tierName;
   hideMsg('pmMsg'); $('pmOk').disabled = false; $('pmCancel').disabled = false; $('pmOk').textContent = 'ยืนยัน';
   $('paidModal').classList.add('show');
+  hostLog('paid-popup ' + (m.bill || ''));
   setTimeout(() => $('pmOk').focus(), 50);
 }
 async function confirmPaid() {
@@ -503,6 +531,7 @@ async function confirmPaid() {
   $('pmOk').disabled = true; $('pmCancel').disabled = true; $('pmOk').innerHTML = '<span class="spin"></span>';
   try {
     const r = await api('addPoints', { phone: paid.member.phone, amount: paid.amount, bill: paid.bill || '' }, true);
+    hostLog('paid-confirm ' + (paid.bill || '') + ' ' + (r.success ? 'ok' : 'fail ' + (r.message || '')));
     if (r.success) {
       showMsg('pmMsg', 'เพิ่ม ' + fmt(paid.amount) + ' แต้มแล้ว · คงเหลือ ' + fmt(r.totalPoints) + ' แต้ม');
       if (current && current.phone === paid.member.phone) { current.points = r.totalPoints; current.yearlySpend = r.yearlySpend; }
@@ -514,6 +543,7 @@ async function confirmPaid() {
   } catch (e) { showMsg('pmMsg', 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง', 'err'); $('pmOk').disabled = false; $('pmCancel').disabled = false; $('pmOk').textContent = 'ยืนยัน'; }
 }
 function closePaid() {
+  if (paid) hostLog('paid-close ' + (paid.bill || ''));
   $('paidModal').classList.remove('show'); paid = null;
   current = null; $('memberArea').innerHTML = ''; $('q').value = '';
   hostHide();
