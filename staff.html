@@ -362,16 +362,46 @@ async function hygeiaSelect() {
   } else showMsg('hMsg', esc(r.error || 'ทำรายการไม่สำเร็จ'), 'err');
 }
 
+const addingNow = new Set();
 async function hygeiaAdd(m, btnId, msgId) {
   const b = $(btnId); const label = b.textContent;
-  b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังเพิ่มในไฮเจีย…';
-  const r = await hostCall('hygeiaAdd', { member: { name: m.hygeiaName, phone: m.phone, group: m.hygeiaGroup, birth: m.birthTh } }, 60000);
+  if (addingNow.has(m.phone)) return false;            // กันกดซ้ำระหว่างกำลังเพิ่ม
+  addingNow.add(m.phone);
+  b.disabled = true; b.innerHTML = '<span class="spin"></span> ตรวจว่ามีในไฮเจียแล้วหรือยัง…';
+  try {
+    // เช็กสถานะล่าสุดจากระบบก่อน เผื่อมีคนเพิ่มไปแล้วจากหน้าอื่น
+    try {
+      const chk = await api('search', { q: m.phone });
+      if (chk.success && chk.member && chk.member.hygeiaAddedAt) {
+        m.hygeiaAddedAt = chk.member.hygeiaAddedAt;
+        if (current && current.phone === m.phone) current.hygeiaAddedAt = chk.member.hygeiaAddedAt;
+        const msg = esc(m.hygeiaName) + ' อยู่ในไฮเจียแล้ว — ไม่เพิ่มซ้ำ';
+        if (msgId) showMsg(msgId, msg, 'warn'); else { renderMember(); showMsg('hMsg', msg, 'warn'); }
+        setTimeout(loadPending, 800); loadSummary();
+        return false;
+      }
+    } catch (e) { /* เช็กไม่ได้ก็ไปต่อ — โปรแกรมบนเครื่องกันซ้ำอีกชั้น */ }
+    b.innerHTML = '<span class="spin"></span> กำลังเพิ่มในไฮเจีย…';
+    const r = await hostCall('hygeiaAdd', { member: { name: m.hygeiaName, phone: m.phone, group: m.hygeiaGroup, birth: m.birthTh } }, 60000);
+    if (!r.ok && r.duplicate) {
+      await api('markHygeia', { phone: m.phone, code: r.code || '' }, true);
+      m.hygeiaAddedAt = 'now';
+      if (current && current.phone === m.phone) current.hygeiaAddedAt = 'now';
+      if (msgId) showMsg(msgId, esc(r.error), 'warn'); else { renderMember(); showMsg('hMsg', esc(r.error), 'warn'); }
+      setTimeout(loadPending, 800); loadSummary();
+      return false;
+    }
+    return await afterAdd(m, r, b, label, msgId);
+  } finally { addingNow.delete(m.phone); }
+}
+
+async function afterAdd(m, r, b, label, msgId) {
   if (r.ok) {
     await api('markHygeia', { phone: m.phone, code: r.code || '' }, true);
     m.hygeiaAddedAt = 'now';
     const msg = 'เพิ่ม ' + esc(m.hygeiaName) + ' ในไฮเจียแล้ว' + (r.code ? ' (' + esc(r.code) + ')' : '');
     if (msgId) showMsg(msgId, msg); else { renderMember(); showMsg('hMsg', msg); }
-    loadSummary();
+    loadSummary(); setTimeout(loadPending, 1500);
     if (r.birthOk === 0) showMsg(msgId || 'hMsg', msg + '<br>วันเกิดอาจยังไม่ได้ใส่ — ตรวจในไฮเจียอีกครั้ง', 'warn');
   } else {
     b.disabled = false; b.textContent = label;
