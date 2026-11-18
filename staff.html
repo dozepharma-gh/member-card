@@ -544,7 +544,9 @@ async function onPaid(m) {
   $('pmName').textContent = r.member.hygeiaName;
   $('pmPts').textContent = fmt(amount);
   $('pmSub').textContent = 'แต้มคงเหลือหลังเพิ่ม ' + fmt(r.member.points + amount) + ' แต้ม · ' + r.member.tierName;
-  hideMsg('pmMsg'); $('pmOk').disabled = false; $('pmCancel').disabled = false; $('pmOk').textContent = 'ยืนยัน';
+  hideMsg('pmMsg');
+  if (m.guess) showMsg('pmMsg', '⚠️ บิลนี้<b>ไม่ได้ใส่ชื่อลูกค้า</b>ในไฮเจีย — ระบบเดาว่าเป็นลูกค้าที่เพิ่งเพิ่ม/เลือก<br>ถ้าไม่ใช่คนนี้ กด <b>ยกเลิก</b>', 'warn');
+  $('pmOk').disabled = false; $('pmCancel').disabled = false; $('pmOk').textContent = 'ยืนยัน';
   $('paidModal').classList.add('show');
   hostLog('paid-popup ' + (m.bill || ''));
   setTimeout(() => $('pmOk').focus(), 50);
