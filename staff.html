@@ -119,6 +119,7 @@
     <button data-tab="new">สมาชิกใหม่<span class="badge zero" id="bNew">0</span></button>
     <button data-tab="follow">ติดตามอาการ<span class="badge zero" id="bFollow">0</span></button>
     <button data-tab="reg">สมัครที่ร้าน</button>
+    <button data-tab="today">วันนี้</button>
   </nav>
 </header>
 <div class="bar"></div>
@@ -127,7 +128,7 @@
   <!-- ค้นหา -->
   <section id="tab-search" class="active">
     <form class="search" id="searchForm" autocomplete="off">
-      <input type="tel" id="q" placeholder="สแกน QR บัตร หรือพิมพ์เบอร์" inputmode="numeric">
+      <input type="text" id="q" placeholder="สแกน QR บัตร หรือพิมพ์เบอร์ / ชื่อ / ชื่อเล่น">
       <button class="btn" type="submit">ค้นหา</button>
       <button class="btn ghost" type="button" onclick="clearSearch()" title="ล้างหน้าจอ (Esc)">ล้าง</button>
     </form>
@@ -150,6 +151,15 @@
     <div class="list" id="dueList"><div class="empty">กำลังโหลด…</div></div>
     <h3 style="margin-top:18px">นัดติดตามถัดไป</h3>
     <div class="list" id="upList"></div>
+  </section>
+
+  <!-- วันนี้ -->
+  <section id="tab-today">
+    <div class="row" style="margin-bottom:10px">
+      <div class="muted" id="todaySum">สมาชิกที่ได้แต้มวันนี้</div>
+      <button class="btn ghost" style="flex:0 0 auto" onclick="loadToday()">รีเฟรช</button>
+    </div>
+    <div class="list" id="todayList"><div class="empty">กำลังโหลด…</div></div>
   </section>
 
   <!-- สมัครที่ร้าน -->
@@ -265,6 +275,7 @@ function switchTab(name) {
   document.querySelectorAll('main section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
   if (name === 'new') loadPending();
   if (name === 'follow') loadFollow();
+  if (name === 'today') loadToday();
   if (name === 'search') setTimeout(() => $('q').focus(), 50);
 }
 document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
@@ -274,15 +285,56 @@ let current = null;
 $('searchForm').addEventListener('submit', e => { e.preventDefault(); doSearch($('q').value); });
 
 async function doSearch(q) {
-  q = String(q || '').replace(/\D/g, '');
+  q = String(q || '').trim();
   hideMsg('searchMsg');
-  if (q.length < 9) { showMsg('searchMsg', 'กรอกเบอร์โทร 10 หลัก หรือสแกน QR บัตรสมาชิก', 'err'); return; }
+  // เครื่องสแกนพิมพ์ตอนแป้นเป็นภาษาไทย → ตัวเลขกลายเป็น ๅ/-ภถุึคตจ → แปลงกลับเป็นตัวเลข
+  if (/^[ๅ\/\-ภถุึคตจ0-9]{9,}$/.test(q) && /[ๅภถุึคตจ]/.test(q)) q = q.replace(/[ๅ\/\-ภถุึคตจ]/g, c => ({ 'ๅ': '1', '/': '2', '-': '3', 'ภ': '4', 'ถ': '5', 'ุ': '6', 'ึ': '7', 'ค': '8', 'ต': '9', 'จ': '0' })[c]);
+  const byName = /[^0-9\s\-+()]/.test(q);           // มีตัวอักษร = ค้นด้วยชื่อ
+  if (!byName) q = q.replace(/\D/g, '');
+  if (!byName && q.length < 9) { showMsg('searchMsg', 'กรอกเบอร์โทร 10 หลัก ชื่อ/ชื่อเล่น หรือสแกน QR บัตรสมาชิก', 'err'); return; }
+  if (byName && q.length < 2) { showMsg('searchMsg', 'พิมพ์ชื่ออย่างน้อย 2 ตัวอักษร', 'err'); return; }
   $('memberArea').innerHTML = '<div class="empty"><span class="spin"></span> กำลังค้นหา…</div>';
   try {
     const r = await api('search', { q });
     if (!r.success) { current = null; $('memberArea').innerHTML = ''; showMsg('searchMsg', esc(r.message) + (r.notFound ? '<br>สมัครให้ได้ที่แท็บ "สมัครที่ร้าน"' : ''), 'err'); return; }
+    if (r.multiple) {                                   // เจอหลายคน → ให้เลือก
+      current = null;
+      $('memberArea').innerHTML = `<div class="muted" style="margin-bottom:8px">พบ ${r.items.length} คน — กดเลือก</div><div class="list">` +
+        r.items.map(m => `<div class="item" style="cursor:pointer" onclick="openMember('${esc(m.phone)}')">
+          <div class="t">${esc(m.hygeiaName)}</div>
+          <div class="s">${fmtPhone(m.phone)} · ${esc(m.tierName)} · ${fmt(m.points)} แต้ม</div></div>`).join('') + '</div>';
+      return;
+    }
     current = r.member; renderMember();
   } catch (err) { $('memberArea').innerHTML = ''; showMsg('searchMsg', 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง', 'err'); }
+}
+
+// ---------- เปิดแชท LINE OA ของลูกค้าใน Chrome ----------
+const OA_CHAT = 'https://chat.line.biz/Ue4299070222e899f5ae1ae2701cf10e7';
+async function openChat() {
+  const m = current; if (!m) return;
+  const url = m.chatId ? OA_CHAT + '/chat/' + m.chatId : OA_CHAT;
+  if (!m.chatId) {
+    try { await navigator.clipboard.writeText(m.hygeiaName); } catch (e) {}
+    showMsg('hMsg', 'ยังไม่มีลิงก์ห้องแชทของ ' + esc(m.hygeiaName) + ' — เปิดหน้ารวมแชทให้แล้ว พิมพ์ค้นชื่อ (คัดลอกชื่อไว้แล้ว กด Ctrl+V)', 'warn');
+  }
+  const r = await hostCall('openUrl', { url }, 8000);
+  if (!r.ok) { try { window.open(url, '_blank'); } catch (e) {} }
+}
+
+// ---------- วันนี้: สมาชิกที่ได้แต้ม ----------
+async function loadToday() {
+  $('todayList').innerHTML = '<div class="empty"><span class="spin"></span> กำลังโหลด…</div>';
+  try {
+    const r = await api('today');
+    if (!r.success) throw new Error(r.message || '');
+    $('todaySum').innerHTML = `วันนี้มีสมาชิกมาใช้บริการ <b>${fmt(r.people)}</b> คน · ${fmt(r.items.length)} บิล · แจก ${fmt(r.totalPoints)} แต้ม`;
+    $('todayList').innerHTML = r.items.length ? r.items.map(x => `
+      <div class="item" style="cursor:pointer" onclick="openMember('${esc(x.phone)}')">
+        <div class="t">${esc(x.time)} · ${esc(x.name)}</div>
+        <div class="s">${x.bill ? 'บิล ' + esc(x.bill) + ' · ' : ''}${esc(x.description.replace(/\s*·\s*บิล\s*PC\S+/, ''))} · <b>+${fmt(x.points)} แต้ม</b></div>
+      </div>`).join('') : '<div class="empty">วันนี้ยังไม่มีสมาชิกได้แต้ม</div>';
+  } catch (e) { $('todayList').innerHTML = '<div class="empty">โหลดไม่ได้ — กดรีเฟรชอีกครั้ง</div>'; }
 }
 
 function renderMember() {
@@ -308,6 +360,7 @@ function renderMember() {
         ${m.hygeiaAddedAt ? '<span class="tag">อยู่ในไฮเจียแล้ว</span>' : '<span class="tag warn">ยังไม่อยู่ในไฮเจีย</span>'}
         ${m.lineLinked ? '<span class="tag">LINE</span>' : ''}
       </div>
+      <button class="btn ghost" style="margin-top:10px" onclick="openChat()">💬 แชท LINE${m.chatId ? '' : ' (ค้นชื่อในหน้าแชท)'}</button>
     </div>
 
     <div class="card" style="margin-top:12px">
@@ -594,7 +647,7 @@ async function loadPending(force) {
         <div class="t">${esc(m.hygeiaName)}</div>
         <div class="s">${fmtPhone(m.phone)} · ${esc(m.tierName)}${m.birthTh ? ' · เกิด ' + esc(m.birthTh) : ''}<br>สมัครเมื่อ ${esc(m.registeredAt)}</div>
         <div class="a"><button class="btn" id="pa${i}" onclick="addPending(${pendingItems.length - 1 - i}, 'pa${i}', 'pm${i}')">เพิ่มลงไฮเจีย</button>
-        <button class="btn ghost" onclick="openMember('${m.phone}')">เปิดข้อมูล</button></div>
+        <button class="btn ghost" onclick="openMember('${m.phone}')">เปิดบัตร / ติดตามอาการ</button></div>
         <div class="msg" id="pm${i}"></div>
       </div>`).join('') : '<div class="empty">ไม่มีสมาชิกใหม่ที่รอเพิ่ม</div>';
   } catch (e) { $('pendingList').innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; }
