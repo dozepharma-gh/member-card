@@ -322,6 +322,15 @@ async function openChat() {
   if (!r.ok) { try { window.open(url, '_blank'); } catch (e) {} }
 }
 
+// ---------- เปิดประวัติบิลขายของลูกค้าในไฮเจีย ----------
+async function openHygeiaHistory() {
+  const m = current; if (!m) return;
+  const b = $('hyHistBtn'); if (b) { b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังเปิดในไฮเจีย…'; }
+  const r = await hostCall('hygeiaHistory', { phone: m.phone }, 40000);
+  if (b) { b.disabled = false; b.textContent = '🧾 ประวัติบิล (ไฮเจีย)'; }
+  if (!r.ok) showMsg('hMsg', esc(r.error || 'เปิดประวัติในไฮเจียไม่สำเร็จ'), 'err');
+}
+
 // ---------- วันนี้: สมาชิกที่ได้แต้ม ----------
 async function loadToday() {
   $('todayList').innerHTML = '<div class="empty"><span class="spin"></span> กำลังโหลด…</div>';
@@ -341,7 +350,7 @@ function renderMember() {
   const m = current; if (!m) return;
   const black = m.tier === 'ระดับ 2';
   const hist = (m.history || []).map(h => `<div class="hist"><span>${esc(h.date)} · ${esc(h.description)}</span><b class="${h.type === 'REDEEM' ? 'minus' : 'plus'}">${h.type === 'REDEEM' ? '−' : '+'}${fmt(h.points)}</b></div>`).join('') || '<div class="muted">ยังไม่มีประวัติ</div>';
-  const fus = (m.followups || []).map(f => `<div class="hist"><span>${thDate(f.due)} · ${esc(f.note)}</span><b>${esc(f.status)}</b></div>`).join('') || '<div class="muted">ยังไม่มีบันทึก</div>';
+  const fus = (m.followups || []).map(f => `<div class="hist"><span>นัดติดตาม ${thDate(f.due)} · ${esc(f.note)}<br><small class="muted">บันทึกเมื่อ ${esc(f.createdAt || '-')}${f.doneAt ? ' · ติดตามแล้ว ' + esc(f.doneAt) + (f.result ? ' — ' + esc(f.result) : '') : ''}</small></span><b>${esc(f.status)}</b></div>`).join('') || '<div class="muted">ยังไม่มีบันทึก</div>';
   const rewardTiles = REWARDS.map(r => {
     const done = r.type === 'UPGRADE_TIER2' && black;
     const short = r.cost - m.points;
@@ -360,7 +369,10 @@ function renderMember() {
         ${m.hygeiaAddedAt ? '<span class="tag">อยู่ในไฮเจียแล้ว</span>' : '<span class="tag warn">ยังไม่อยู่ในไฮเจีย</span>'}
         ${m.lineLinked ? '<span class="tag">LINE</span>' : ''}
       </div>
-      <button class="btn ghost" style="margin-top:10px" onclick="openChat()">💬 แชท LINE${m.chatId ? '' : ' (ค้นชื่อในหน้าแชท)'}</button>
+      <div class="row" style="margin-top:10px;gap:8px">
+        <button class="btn ghost" style="flex:1" onclick="openChat()">💬 แชท LINE${m.chatId ? '' : ' (ค้นชื่อ)'}</button>
+        <button class="btn ghost" style="flex:1" onclick="openHygeiaHistory()" id="hyHistBtn">🧾 ประวัติบิล (ไฮเจีย)</button>
+      </div>
     </div>
 
     <div class="card" style="margin-top:12px">
@@ -679,7 +691,7 @@ async function loadFollow() {
     const card = (f, due) => `
       <div class="item ${due ? 'due' : ''}">
         <div class="t">${esc(f.name)}</div>
-        <div class="s">${thDate(f.due)} · ${fmtPhone(f.phone)}</div>
+        <div class="s">นัดติดตาม ${thDate(f.due)} · ${fmtPhone(f.phone)}<br>บันทึกเมื่อ ${esc(f.createdAt || '-')}</div>
         <div style="margin-top:6px">${esc(f.note)}</div>
         ${due ? `<div class="a"><input type="text" id="res-${f.id}" placeholder="ผลการติดตาม เช่น อาการดีขึ้น"><button class="btn" style="flex:0 0 auto" onclick="doneFollow('${f.id}')">ติดตามแล้ว</button></div>` : ''}
         <div class="a"><button class="btn ghost" onclick="openMember('${f.phone}')">เปิดข้อมูลลูกค้า</button></div>
