@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #111214; --ink-2: #3a3d42; --ink-3: #6b6f75; --line: #d5d8dc; --bg: #f4f5f7; --card: #fff;
+    --ink: #111214; --ink-2: #3a3d42; --ink-3: #6b6f75; --line: #dfe1e4; --bg: #ffffff; --card: #fff; --soft: #f4f5f7;
     --silver: linear-gradient(135deg, #fbfbfc 0%, #d5d8dc 18%, #f2f3f5 36%, #b4b8be 58%, #e6e8eb 78%, #c2c6cb 100%);
     --silver-bar: linear-gradient(90deg, #c2c6cb 0%, #f2f3f5 30%, #b4b8be 60%, #fbfbfc 85%, #c2c6cb 100%);
     --ok: #1f7a4d; --ok-bg: #e7f4ec; --warn: #8a5a00; --warn-bg: #fdf3dc; --err: #a32d2d; --err-bg: #fbeaea;
@@ -18,21 +18,21 @@
   body { background: var(--bg); font-family: 'Kanit', sans-serif; color: var(--ink); font-size: 15px; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; }
   button, input, textarea, select { font-family: inherit; font-size: 15px; }
 
-  header { background: var(--ink); color: #fff; padding: 10px 14px 0; flex-shrink: 0; }
+  header { background: var(--ink); color: #fff; padding: 16px 20px 0; flex-shrink: 0; }
   .top { display: flex; align-items: center; gap: 10px; }
   .top img { height: 30px; }
   .top .sub { font-size: 10px; letter-spacing: .3em; color: #b4b8be; }
   .conn { margin-left: auto; font-size: 12px; display: flex; align-items: center; gap: 6px; color: #b4b8be; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #6b6f75; }
   .dot.on { background: #3ecf8e; } .dot.off { background: #e5484d; }
-  nav { display: flex; gap: 2px; margin-top: 10px; }
-  nav button { flex: 1; background: none; border: 0; color: #b4b8be; padding: 9px 4px 10px; border-bottom: 3px solid transparent; cursor: pointer; font-size: 14px; position: relative; }
-  nav button.active { color: #fff; border-bottom-color: #e6e8eb; }
+  nav { display: flex; gap: 20px; margin-top: 12px; flex-wrap: wrap; }
+  nav button { background: none; border: 0; color: #b4b8be; padding: 4px 0 12px; border-bottom: 2px solid transparent; cursor: pointer; font-size: 15px; position: relative; }
+  nav button.active { color: #fff; border-bottom-color: #fff; font-weight: 500; }
   .badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 10px; background: #e5484d; color: #fff; font-size: 12px; line-height: 20px; margin-left: 4px; }
   .badge.zero { display: none; }
   .bar { height: 4px; background: var(--silver-bar); flex-shrink: 0; }
 
-  main { flex: 1; overflow-y: auto; padding: 14px; }
+  main { flex: 1; overflow-y: auto; padding: 18px 20px; }
   section { display: none; } section.active { display: block; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
   h3 { margin: 0 0 10px; font-size: 16px; font-weight: 600; }
@@ -55,20 +55,41 @@
   .msg { border-radius: 12px; padding: 10px 12px; font-size: 14px; margin-top: 10px; display: none; }
   .msg.show { display: block; } .msg.ok { background: var(--ok-bg); color: var(--ok); } .msg.err { background: var(--err-bg); color: var(--err); } .msg.warn { background: var(--warn-bg); color: var(--warn); }
 
-  .search { display: flex; gap: 8px; }
-  .search input { font-size: 18px; padding: 12px 14px; letter-spacing: .04em; }
-  .search .btn { flex-shrink: 0; }
+  .search { display: flex; align-items: center; gap: 10px; background: var(--soft); border-radius: 14px; padding: 0 8px 0 16px; height: 52px; }
+  .search input[type=text] { flex: 1; border: 0; background: transparent; font-size: 17px; padding: 0; box-shadow: none; letter-spacing: .02em; }
+  .search input[type=text]:focus { box-shadow: none; }
+  .search .clear { border: 0; background: transparent; color: var(--ink-3); cursor: pointer; min-height: 44px; padding: 0 8px; font-size: 14px; }
+  .sr { position: absolute; left: -9999px; }
 
-  .mcard { border-radius: 16px; padding: 14px 16px; color: var(--ink); background: var(--silver); border: 1px solid #b4b8be; position: relative; overflow: hidden; }
+  .mcard { border-radius: 18px; padding: 18px 20px; color: var(--ink); background: var(--silver); border: 1px solid #b4b8be; display: flex; flex-direction: column; gap: 14px; }
+  .mtop { display: flex; align-items: flex-start; gap: 16px; }
+  .mtop .who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .mcard.black { background: repeating-linear-gradient(90deg, #121315 0 2px, #17181b 2px 4px); color: #f2f3f5; border-color: #2a2c30; }
-  .mcard .tier { font-size: 11px; letter-spacing: .25em; text-transform: uppercase; opacity: .75; }
-  .mcard .name { font-size: 20px; font-weight: 600; margin-top: 4px; line-height: 1.25; }
-  .mcard .meta { font-size: 13px; opacity: .8; margin-top: 2px; }
-  .mcard .pts { position: absolute; right: 16px; top: 14px; text-align: right; }
-  .mcard .pts b { font-size: 24px; font-weight: 600; display: block; line-height: 1.1; }
-  .mcard .pts span { font-size: 11px; opacity: .75; }
-  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-  .tag { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: rgba(255,255,255,.55); border: 1px solid rgba(0,0,0,.12); }
+  .mcard .tier { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; opacity: .8; }
+  .mcard .name { font-size: 22px; font-weight: 600; line-height: 1.25; }
+  .mcard .meta { font-size: 14px; opacity: .8; }
+  .mcard .pts { text-align: right; flex-shrink: 0; }
+  .mcard .pts b { font-size: 30px; font-weight: 600; display: block; line-height: 1; }
+  .mcard .pts span { font-size: 12px; opacity: .8; }
+  .acts { display: flex; gap: 8px; }
+  .acts .btn { height: 52px; padding: 0 10px; font-size: 14px; }
+  .acts .main { flex: 1.6; font-size: 16px; }
+  .acts .sub { flex: 1; background: rgba(255,255,255,.75); color: var(--ink); border-color: rgba(0,0,0,.14); font-weight: 400; }
+  .mcard.black .acts .main { background: #f2f3f5; color: var(--ink); border-color: #f2f3f5; }
+  .mcard.black .acts .sub { background: rgba(255,255,255,.08); color: #f2f3f5; border-color: rgba(255,255,255,.2); }
+  .seg { display: flex; gap: 6px; background: #eef0f2; border-radius: 12px; padding: 4px; margin-top: 18px; }
+  .seg button { flex: 1; height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--ink-2); cursor: pointer; font-size: 15px; }
+  .seg button.on { background: #fff; color: var(--ink); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .pane { display: none; margin-top: 14px; } .pane.on { display: block; }
+  .spend { display: flex; align-items: baseline; justify-content: space-between; padding: 2px 2px 12px; }
+  .spend span { font-size: 14px; color: var(--ink-2); } .spend b { font-size: 20px; font-weight: 600; } .spend small { font-size: 13px; color: var(--ink-2); font-weight: 400; }
+  .foot { display: flex; justify-content: flex-end; margin-top: 18px; font-size: 13px; }
+  .foot button { background: none; border: 0; color: var(--ink-2); text-decoration: underline; cursor: pointer; font-size: 13px; padding: 6px 0; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,.6); border: 1px solid rgba(0,0,0,.12); }
+  .tag i { width: 6px; height: 6px; border-radius: 50%; background: #1f9d63; display: inline-block; }
+  .tag.bday { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .mcard.black .tag.bday { background: #f2f3f5; color: var(--ink); }
   .mcard.black .tag { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
   .tag.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
 
@@ -117,23 +138,24 @@
   <nav>
     <button data-tab="search" class="active">ค้นหา</button>
     <button data-tab="new">สมาชิกใหม่<span class="badge zero" id="bNew">0</span></button>
-    <button data-tab="follow">ติดตามอาการ<span class="badge zero" id="bFollow">0</span></button>
-    <button data-tab="reg">สมัครที่ร้าน</button>
+    <button data-tab="follow">ติดตาม<span class="badge zero" id="bFollow">0</span></button>
+    <button data-tab="reg">สมัคร</button>
     <button data-tab="today">วันนี้</button>
   </nav>
 </header>
-<div class="bar"></div>
 
 <main>
   <!-- ค้นหา -->
   <section id="tab-search" class="active">
     <form class="search" id="searchForm" autocomplete="off">
-      <input type="text" id="q" placeholder="สแกน QR บัตร หรือพิมพ์เบอร์ / ชื่อ / ชื่อเล่น">
-      <button class="btn" type="submit">ค้นหา</button>
-      <button class="btn ghost" type="button" onclick="clearSearch()" title="ล้างหน้าจอ (Esc)">ล้าง</button>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6f75" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <label class="sr" for="q">ค้นหาสมาชิก</label>
+      <input type="text" id="q" placeholder="สแกน QR หรือพิมพ์เบอร์ / ชื่อ / ชื่อเล่น">
+      <button class="sr" type="submit">ค้นหา</button>
+      <button class="clear" type="button" onclick="clearSearch()" title="ล้างหน้าจอ (Esc)">ล้าง</button>
     </form>
     <div class="msg" id="searchMsg"></div>
-    <div id="memberArea" style="margin-top:12px"></div>
+    <div id="memberArea" style="margin-top:16px"></div>
   </section>
 
   <!-- สมาชิกใหม่ -->
@@ -305,7 +327,7 @@ async function doSearch(q) {
           <div class="s">${fmtPhone(m.phone)} · ${esc(m.tierName)} · ${fmt(m.points)} แต้ม</div></div>`).join('') + '</div>';
       return;
     }
-    current = r.member; renderMember();
+    current = r.member; memberPane = nextPane || 'redeem'; nextPane = null; renderMember();
   } catch (err) { $('memberArea').innerHTML = ''; showMsg('searchMsg', 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง', 'err'); }
 }
 
@@ -327,7 +349,7 @@ async function openHygeiaHistory() {
   const m = current; if (!m) return;
   const b = $('hyHistBtn'); if (b) { b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังเปิดในไฮเจีย…'; }
   const r = await hostCall('hygeiaHistory', { phone: m.phone }, 40000);
-  if (b) { b.disabled = false; b.textContent = '🧾 ประวัติบิล (ไฮเจีย)'; }
+  if (b) { b.disabled = false; b.textContent = 'ประวัติการจ่ายยา'; }
   if (!r.ok) showMsg('hMsg', esc(r.error || 'เปิดประวัติในไฮเจียไม่สำเร็จ'), 'err');
 }
 
@@ -358,51 +380,50 @@ function renderMember() {
     return `<button class="rw ${r.type === 'UPGRADE_TIER2' ? 'up' : ''}" ${done || short > 0 ? 'disabled' : ''} onclick="redeem('${r.type}')">
       <span class="rl">${r.label}</span><span class="rc">${fmt(r.cost)} แต้ม</span><span class="rs">${sub}</span></button>`;
   }).join('');
+  const bday = m.birthIso && Number(m.birthIso.slice(5, 7)) === new Date().getMonth() + 1;
+  const gift = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16v9H4z"/><path d="M3 7h18v4H3z"/><path d="M12 7v13"/><path d="M12 7c-2-3-5-3-5-1s3 1 5 1c2 0 5 1 5-1s-3-2-5 1"/></svg>';
+  const icBill = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>';
+  const icChat = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
+  const icRx = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>';
+  const pane = memberPane || 'redeem';
   $('memberArea').innerHTML = `
     <div class="mcard ${black ? 'black' : ''}">
-      <div class="tier">${esc(m.tierName)}</div>
-      <div class="pts"><b>${fmt(m.points)}</b><span>แต้มคงเหลือ</span></div>
-      <div class="name">${esc(m.hygeiaName)}</div>
-      <div class="meta">${fmtPhone(m.phone)}${m.birthTh ? ' · เกิด ' + esc(m.birthTh) : ''}</div>
+      <div class="mtop">
+        <div class="who">
+          <div class="tier">${esc(m.tierName)}</div>
+          <div class="name">${esc(m.hygeiaName)}</div>
+          <div class="meta">${fmtPhone(m.phone)}</div>
+        </div>
+        <div class="pts"><b>${fmt(m.points)}</b><span>แต้มคงเหลือ</span></div>
+      </div>
       <div class="tags">
-        <span class="tag">ยอดซื้อปีนี้ ${fmt(m.yearlySpend)} บาท</span>
-        ${m.hygeiaAddedAt ? '<span class="tag">อยู่ในไฮเจียแล้ว</span>' : '<span class="tag warn">ยังไม่อยู่ในไฮเจีย</span>'}
-        ${m.lineLinked ? '<span class="tag">LINE</span>' : ''}
+        ${m.lineLinked ? '<span class="tag"><i></i>LINE เชื่อมแล้ว</span>' : ''}
+        ${m.hygeiaAddedAt ? '<span class="tag"><i></i>Hygeia เชื่อมแล้ว</span>' : '<span class="tag warn">ยังไม่อยู่ใน Hygeia</span>'}
+        ${bday ? '<span class="tag bday">' + gift + 'Birthday month</span>' : ''}
       </div>
-      <div class="row" style="margin-top:10px;gap:8px">
-        <button class="btn ghost" style="flex:1" onclick="openChat()">💬 แชท LINE${m.chatId ? '' : ' (ค้นชื่อ)'}</button>
-        <button class="btn ghost" style="flex:1" onclick="openHygeiaHistory()" id="hyHistBtn">🧾 ประวัติบิล (ไฮเจีย)</button>
+      <div class="acts">
+        ${m.hygeiaAddedAt
+          ? `<button class="btn main" id="selBtn" onclick="hygeiaSelect()">${icBill}เพิ่มชื่อในบิลขาย</button>`
+          : `<button class="btn main" id="addHBtn" onclick="hygeiaAdd(current, 'addHBtn')">${icBill}เพิ่มลง Hygeia + ใส่ในบิล</button>`}
+        <button class="btn sub" onclick="openChat()" title="${m.chatId ? 'เปิดห้องแชทของลูกค้า' : 'ยังไม่มีลิงก์ห้องแชท — จะเปิดหน้ารวมแชทให้ค้นชื่อ'}">${icChat}แชท LINE</button>
+        <button class="btn sub" style="flex:1.15" onclick="openHygeiaHistory()" id="hyHistBtn">${icRx}ประวัติการจ่ายยา</button>
       </div>
     </div>
+    <div class="msg" id="hMsg"></div>
 
-    <div class="card" style="margin-top:12px">
-      <h3>ไฮเจีย</h3>
-      ${m.hygeiaAddedAt
-        ? `<button class="btn block" id="selBtn" onclick="hygeiaSelect()">ใส่ชื่อลูกค้าในบิลไฮเจีย</button>`
-        : `<button class="btn block" id="addHBtn" onclick="hygeiaAdd(current, 'addHBtn')">เพิ่มลงไฮเจีย + ใส่ในบิล</button>`}
-      <div class="msg" id="hMsg"></div>
+    <div class="seg" role="tablist">
+      <button type="button" data-pane="redeem" class="${pane === 'redeem' ? 'on' : ''}">แลกแต้ม</button>
+      <button type="button" data-pane="follow" class="${pane === 'follow' ? 'on' : ''}">ติดตามอาการ</button>
+      <button type="button" data-pane="hist" class="${pane === 'hist' ? 'on' : ''}">ประวัติ</button>
     </div>
 
-    <div class="card">
-      <details>
-      <summary>เพิ่มแต้มเอง (กรณีพิเศษ)</summary>
-      <div class="muted" style="margin:4px 0 8px">ปกติแต้มจะเด้งให้ยืนยันเองหลังกดรับเงิน (F3) ในไฮเจีย</div>
-      <input type="number" id="amt" class="amount" placeholder="0.00" min="0" step="0.01" oninput="previewPts()">
-      <div class="preview" id="ptsPreview">1 บาท = 1 แต้ม</div>
-      <label class="consent"><input type="checkbox" id="bonus"> เป็นแต้มพิเศษ (ไม่นับเป็นยอดซื้อ)</label>
-      <button class="btn block" style="margin-top:10px" onclick="confirmPoints()" id="ptsBtn">ยืนยันเพิ่มแต้ม</button>
-      <div class="msg" id="pMsg"></div>
-      </details>
-    </div>
-
-    <div class="card">
-      <h3>แลกแต้ม</h3>
+    <div class="pane ${pane === 'redeem' ? 'on' : ''}" id="pane-redeem">
+      <div class="spend"><span>ยอดซื้อรวมปีนี้</span><b>${fmt(m.yearlySpend)} <small>บาท</small></b></div>
       <div class="rwgrid">${rewardTiles}</div>
       <div class="msg" id="rwMsg"></div>
     </div>
 
-    <div class="card">
-      <h3>ติดตามอาการ</h3>
+    <div class="pane ${pane === 'follow' ? 'on' : ''}" id="pane-follow">
       <textarea id="fuNote" placeholder="เช่น ไอ เจ็บคอ จ่าย Amoxicillin 500 mg 5 วัน"></textarea>
       <label class="f">วันที่ติดตาม (แจ้งเตือน 10:00 น.)</label>
       <input type="date" id="fuDate">
@@ -413,11 +434,28 @@ function renderMember() {
       <label class="consent"><input type="checkbox" id="fuConsent" ${m.healthConsent === 'ยินยอม' ? 'checked' : ''}> ${m.healthConsent === 'ยินยอม' ? 'ลูกค้ายินยอมให้บันทึกอาการไว้แล้วตอนสมัคร' : 'ลูกค้ายินยอมให้ร้านบันทึกอาการ เพื่อติดต่อกลับติดตามผลการใช้ยา (ขอความยินยอมด้วยวาจา)'}</label>
       <button class="btn block" style="margin-top:10px" onclick="addFollow()" id="fuBtn">ตั้งเตือนติดตามอาการ</button>
       <div class="msg" id="fuMsg"></div>
-      <details style="margin-top:10px"><summary>ประวัติการติดตาม</summary>${fus}</details>
+      <div style="margin-top:14px"><div class="muted" style="margin-bottom:4px">ประวัติการติดตาม</div>${fus}</div>
     </div>
 
-    <div class="card"><details><summary>ประวัติแต้มล่าสุด</summary>${hist}</details></div>`;
+    <div class="pane ${pane === 'hist' ? 'on' : ''}" id="pane-hist">
+      <div class="muted" style="margin-bottom:4px">ประวัติแต้มล่าสุด</div>${hist}
+    </div>
 
+    <div class="foot"><button type="button" onclick="toggleManual()">เพิ่มแต้มเอง (กรณีพิเศษ)</button></div>
+    <div class="card" id="manualPts" style="display:none;margin-top:8px">
+      <div class="muted" style="margin:0 0 8px">ปกติแต้มจะเด้งให้ยืนยันเองหลังกดรับเงิน (F3) ในไฮเจีย</div>
+      <input type="number" id="amt" class="amount" placeholder="0.00" min="0" step="0.01" oninput="previewPts()">
+      <div class="preview" id="ptsPreview">1 บาท = 1 แต้ม</div>
+      <label class="consent"><input type="checkbox" id="bonus"> เป็นแต้มพิเศษ (ไม่นับเป็นยอดซื้อ)</label>
+      <button class="btn block" style="margin-top:10px" onclick="confirmPoints()" id="ptsBtn">ยืนยันเพิ่มแต้ม</button>
+      <div class="msg" id="pMsg"></div>
+    </div>`;
+
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    memberPane = b.dataset.pane;
+    document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.pane').forEach(x => x.classList.toggle('on', x.id === 'pane-' + memberPane));
+  }));
   document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
     document.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
     c.classList.add('on'); $('fuDate').value = isoAdd(Number(c.dataset.d));
@@ -425,6 +463,9 @@ function renderMember() {
   $('fuDate').addEventListener('input', () => document.querySelectorAll('.chip').forEach(x => x.classList.remove('on')));
   $('q').select();
 }
+
+let memberPane = 'redeem';
+function toggleManual() { const c = $('manualPts'); c.style.display = c.style.display === 'none' ? 'block' : 'none'; if (c.style.display === 'block') $('amt').focus(); }
 
 function previewPts() {
   const a = Number($('amt').value || 0);
@@ -434,7 +475,7 @@ function previewPts() {
 async function hygeiaSelect() {
   const b = $('selBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังใส่ชื่อในบิล…';
   const r = await hostCall('hygeiaSelect', { phone: current.phone });
-  b.disabled = false; b.textContent = 'ใส่ชื่อลูกค้าในบิลไฮเจีย';
+  b.disabled = false; b.textContent = 'เพิ่มชื่อในบิลขาย';
   if (r.ok) {
     showMsg('hMsg', 'ใส่ชื่อ ' + esc(current.hygeiaName) + ' ในบิลแล้ว · กดรับเงิน (F3) ในไฮเจียตามปกติ แล้วระบบจะถามเพิ่มแต้มให้');
     if (r.code) api('markHygeia', { phone: current.phone, code: r.code }, true);
@@ -659,7 +700,7 @@ async function loadPending(force) {
         <div class="t">${esc(m.hygeiaName)}</div>
         <div class="s">${fmtPhone(m.phone)} · ${esc(m.tierName)}${m.birthTh ? ' · เกิด ' + esc(m.birthTh) : ''}<br>สมัครเมื่อ ${esc(m.registeredAt)}</div>
         <div class="a"><button class="btn" id="pa${i}" onclick="addPending(${pendingItems.length - 1 - i}, 'pa${i}', 'pm${i}')">เพิ่มลงไฮเจีย</button>
-        <button class="btn ghost" onclick="openMember('${m.phone}')">เปิดบัตร / ติดตามอาการ</button></div>
+        <button class="btn ghost" onclick="openMember('${m.phone}', 'follow')">เปิดบัตร / ติดตามอาการ</button></div>
         <div class="msg" id="pm${i}"></div>
       </div>`).join('') : '<div class="empty">ไม่มีสมาชิกใหม่ที่รอเพิ่ม</div>';
   } catch (e) { $('pendingList').innerHTML = '<div class="empty">โหลดไม่สำเร็จ</div>'; }
@@ -682,7 +723,8 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || $('paidModal').classList.contains('show')) return;
   if ($('tab-search').classList.contains('active') && (current || $('q').value)) { e.preventDefault(); clearSearch(); }
 });
-function openMember(phone) { switchTab('search'); $('q').value = phone; doSearch(phone); }
+let nextPane = null;
+function openMember(phone, pane) { switchTab('search'); $('q').value = phone; nextPane = pane || null; doSearch(phone); }
 
 // ---------- ติดตามอาการ ----------
 async function loadFollow() {
